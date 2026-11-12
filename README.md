@@ -8,7 +8,7 @@ mise exec -- pnpm install --frozen-lockfile
 mise exec -- pnpm dev
 ```
 
-打开 [本地预览](http://127.0.0.1:4397/)。Shell 已启用 mise 时，可以直接运行 `pnpm`。
+打开终端打印的 `Local` 地址（默认是 [4397 端口](http://127.0.0.1:4397/)，被占用时自动顺延）。Shell 已启用 mise 时，可以直接运行 `pnpm`。
 
 `pnpm check` 检查 JavaScript 语法，`pnpm build` 生成 `dist/`，`pnpm preview` 在 [4398 端口](http://127.0.0.1:4398/) 预览构建产物。
 
