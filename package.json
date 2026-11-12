@@ -3,8 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": "^22.12.0"
+  },
   "scripts": {
-    "start": "python3 -m http.server 4397 --bind 127.0.0.1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "check": "node --check desktop.js && node --check apps.js"
+  },
+  "devDependencies": {
+    "vite": "8.3.8"
   }
 }

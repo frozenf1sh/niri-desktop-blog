@@ -35,12 +35,13 @@ const recentFiles = [
   { name: "暮色海湾.webp", id: "wallpaper" },
   { name: "便笺.txt", id: "notes" },
 ];
+const wallpaperUrl = new URL("./assets/dusk.webp", import.meta.url).href;
 
 function mountFiles(root, openApp) {
   const folderButton = ({ id, name, color }) =>
     `<button class="file-item" type="button" data-go="${id}" style="--folder-color:${color}">${icon("folder-fill")}<span>${name}</span></button>`;
   const recentButton = ({ id, name }) => `<button class="file-item recent-item" type="button" data-file="${id}" title="${name}">
-    ${id === "wallpaper" ? '<img class="file-thumb" src="./assets/dusk.webp" alt="">' : `<span class="file-thumb">${icon("file")}</span>`}
+    ${id === "wallpaper" ? `<img class="file-thumb" src="${wallpaperUrl}" alt="">` : `<span class="file-thumb">${icon("file")}</span>`}
     <span>${name}</span></button>`;
 
   root.innerHTML = `<div class="file-app">
@@ -90,7 +91,7 @@ function mountFiles(root, openApp) {
         <h3 class="file-heading">最近</h3><div class="recent-grid">${recentFiles.map(recentButton).join("")}</div>`;
     } else if (current === "wallpaper") {
       count = 1;
-      view.innerHTML = '<img class="image-preview" src="./assets/dusk.webp" alt="暮色海湾">';
+      view.innerHTML = `<img class="image-preview" src="${wallpaperUrl}" alt="暮色海湾">`;
     } else {
       view.innerHTML = `<div class="recent-grid">${files.map(recentButton).join("")}</div>`;
     }
@@ -190,8 +191,8 @@ function mountTerminal(root) {
 }
 
 const tracks = [
-  { title: "晚潮", artist: "海湾", source: "./assets/low-tide.mp3" },
-  { title: "月落", artist: "海湾", source: "./assets/moonset.mp3" },
+  { title: "晚潮", artist: "海湾", source: new URL("./assets/low-tide.mp3", import.meta.url).href },
+  { title: "月落", artist: "海湾", source: new URL("./assets/moonset.mp3", import.meta.url).href },
 ];
 
 function mountMusic(root) {

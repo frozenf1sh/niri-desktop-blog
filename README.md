@@ -1,12 +1,16 @@
 # niri desktop
 
-一个用 HTML、CSS 和 JavaScript 写的桌面原型，无需安装前端依赖。需要 Node.js（运行 npm 脚本）和 Python 3（启动本地静态服务）。
+一个用 HTML、CSS 和 JavaScript 写的桌面原型。Node.js 和 pnpm 由项目的 `mise.toml` 固定，Vite 负责本地开发和静态构建。
 
 ```sh
-npm start
+mise install
+mise exec -- pnpm install --frozen-lockfile
+mise exec -- pnpm dev
 ```
 
-打开 [本地预览](http://127.0.0.1:4397/)。`npm run check` 检查 JavaScript 语法。
+打开 [本地预览](http://127.0.0.1:4397/)。Shell 已启用 mise 时，可以直接运行 `pnpm`。
+
+`pnpm check` 检查 JavaScript 语法，`pnpm build` 生成 `dist/`，`pnpm preview` 在 [4398 端口](http://127.0.0.1:4398/) 预览构建产物。
 
 - 左上角的药丸切换工作区。也可以用 `Alt+1/2/3`、`Alt+↑/↓`，或在宽屏桌面的空白处滚动。
 - 点窗口标题栏右侧的按钮可以最大化、还原或关闭窗口；左上角的九宫格可重新打开应用。
