@@ -148,6 +148,54 @@
   overscroll-behavior: contain;
 }
 
+.outline-toggle[aria-expanded="true"] {
+  color: var(--accent);
+  background: #ab84ff22;
+}
+
+.reader-outline {
+  position: absolute;
+  z-index: 2;
+  top: 52px;
+  right: 10px;
+  display: grid;
+  gap: 3px;
+  width: min(245px, calc(100% - 20px));
+  max-height: calc(100% - 62px);
+  overflow: auto;
+  padding: 7px;
+  border: 1px solid #62576f;
+  border-radius: 11px;
+  background: #262131;
+  box-shadow: 0 10px 26px #0c091780;
+  scrollbar-width: thin;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-5px);
+  transition: opacity 170ms var(--ease), transform 210ms var(--spring), visibility 210ms;
+}
+
+.reader-outline.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.reader-outline button {
+  padding: 7px 8px 7px calc(8px + 12px * var(--outline-indent));
+  border-radius: 6px;
+  color: var(--muted);
+  text-align: left;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.reader-outline button:hover,
+.reader-outline button[aria-current="location"] {
+  color: var(--accent);
+  background: #ab84ff22;
+}
+
 .post {
   max-width: 770px;
   margin: 0 auto;

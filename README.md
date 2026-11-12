@@ -1,4 +1,4 @@
-# niri desktop
+# niri-desktop-blog
 
 Felix 的桌面风格博客。Node.js 和 pnpm 由项目的 `mise.toml` 固定，Vite 负责本地开发和静态构建。
 
@@ -21,16 +21,25 @@ mise exec -- pnpm dev
 
 首页的文件窗口列出最近文章。点击文章会打开文章工作区，浏览器的前进和后退会恢复对应的窗口、列表和滚动位置。关于工作区从 `profile.js` 和 `public/interests.json` 读取资料。便笺和日历可以从启动器打开。
 
+阅读器标题栏的目录按钮可以展开当前文章的章节。点击章节即可跳转，阅读时目录会标出当前章节。
+
 新文章放在 `content/posts/`。文件名用英文小写和连字符，它会成为文章地址的一部分。文件开头的 YAML front matter 填写 `title`、`date`（`YYYY-MM-DD`）、`description` 和可选的 `tags`。构建后，`dist/articles/<文件名>/index.html` 包含正文，文章链接可以直接打开和分享。
 
 工作区默认打开哪些应用由 `blog/routes.js` 配置。应用在 `apps.js` 注册，沿用桌面的窗口管理。
 
 ## 终端
 
-点击终端内容区可跳到输入行，用上下键回溯命令。欢迎画面会运行 `kubectl describe pod felix` 和 `cat interests.json`；输入 `help` 可查看支持的命令。
+点击终端内容区可跳到输入行，用上下键回溯命令。欢迎画面会运行 `kubectl describe pod felix` 和 `cat interests.json`。输入 `help` 可查看命令的中文说明。`Tab` 补全命令、路径和文章名，有多个候选时用上下键选择，再按 Enter 确认。
+
+```sh
+cd 文章
+ls
+search 命令行
+read browser-terminal
+```
 
 - `profile.js` 保存关于页和模拟 Pod 共用的资料，`terminal/profile.js` 管理欢迎画面。
-- `terminal/shell.js` 解析输入并分发命令。扩展时在 `terminal/commands.js` 注册一个 `{ name, usage, run(args, context) }`；`run` 可返回文本或 `{ text, kind }`，也支持异步返回，`help` 会自动列出用法。
+- `terminal/shell.js` 解析输入并分发命令。扩展时在 `terminal/commands.js` 注册 `{ name, usage, description, run(args, context) }`，也可以为参数提供 `complete`。命令支持异步返回，`help` 会自动列出用法和说明。
 - `terminal/files.js` 登记 `cat` 可读取的静态文件，`interests.json` 的原文来自 `public/interests.json`。`terminal/view.js` 负责渲染和输入，不需要为新命令或文件改动。
 
 工作区切换和窗口重排参考 [niri 的动画配置](https://github.com/niri-wm/niri/wiki/Configuration%3A-Animations) 使用临界阻尼曲线；页面遵循系统的减少动态效果设置。

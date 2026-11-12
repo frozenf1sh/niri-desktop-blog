@@ -24,9 +24,21 @@ function compilePost(slug, source) {
       || !Array.isArray(tags) || tags.some((tag) => typeof tag !== "string" || !tag.trim())) {
     throw new Error(`${slug}.md 的 title、date、description 或 tags 格式不正确`);
   }
-  const html = markdown.render(source.slice(frontMatter[0].length));
+  const env = {};
+  const tokens = markdown.parse(source.slice(frontMatter[0].length), env);
+  const headings = [];
+  for (const [index, token] of tokens.entries()) {
+    if (token.type !== "heading_open" || token.level !== 0) continue;
+    const inline = tokens[index + 1];
+    const label = inline.children.map(({ content }) => content).join("").trim();
+    if (!label) continue;
+    const id = `post-${slug}-${headings.length + 1}`;
+    token.attrSet("id", id);
+    headings.push({ id, label, level: Number(token.tag.slice(1)) });
+  }
+  const html = markdown.renderer.render(tokens, markdown.options, env);
   if (!html.trim()) throw new Error(`${slug}.md 缺少正文`);
-  return { slug, title: title.trim(), date, description: description.trim(), tags, html };
+  return { slug, title: title.trim(), date, description: description.trim(), tags, html, headings, source };
 }
 
 async function loadPosts() {
@@ -49,7 +61,7 @@ function renderPage(template, route, posts, interests) {
   let content;
   if (post) content = articleMarkup(post);
   else if (route.workspace === "about") {
-    content = `${profileMarkup(interests)}${projectsMarkup(posts, hrefFor)}`;
+    content = `${profileMarkup(interests)}${projectsMarkup()}`;
   } else {
     content = `<div class="static-index"><h1>${route.workspace === "home" ? profile.name : "文章"}</h1><ul>${list}</ul></div>`;
   }

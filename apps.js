@@ -1,9 +1,8 @@
 import { mountArchive, mountProfile, mountProjects, mountReader } from "./blog/apps.js";
 import { postHref, posts, siteBase } from "./blog/content.js";
 import { escapeHtml } from "./blog/markup.js";
+import { icon } from "./icons.js";
 import { mountTerminal } from "./terminal/view.js";
-
-export const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
 export function paintRange(input) {
   const progress = 100 * (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min));
@@ -284,7 +283,10 @@ export const apps = [
   { id: "files", title: "文件", icon: "folder", color: "#d1b9ff", mount: (root, { openApp }) => mountFiles(root, openApp) },
   {
     id: "terminal", title: "终端", icon: "terminal", color: "#a5decb",
-    mount: (root) => mountTerminal(root, locations.slice(1).map(({ name }) => name), siteBase),
+    mount: (root, { openArticle }) => mountTerminal(root, {
+      directories: locations.slice(1).map(({ name }) => name),
+      baseUrl: siteBase, posts, postHref, openArticle,
+    }),
   },
   { id: "music", title: "音乐", icon: "music", color: "#f0b9d7", mount: mountMusic },
   { id: "archive", title: "归档", icon: "folder", color: "#d1b9ff", mount: mountArchive },

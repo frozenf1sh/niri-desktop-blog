@@ -1,15 +1,20 @@
-import { apps, icon, paintRange, readSetting, writeSetting } from "./apps.js";
+import { apps, paintRange, readSetting, writeSetting } from "./apps.js";
 import { postBySlug, posts, siteBase } from "./blog/content.js";
 import { pageTitle } from "./blog/markup.js";
 import { connectNavigation } from "./blog/navigation.js";
 import { readRoute, workspaces } from "./blog/routes.js";
+import { icon } from "./icons.js";
+import { animateWindowLayout, finishWindowLayout } from "./window-motion.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const all = (selector, root = document) => [...root.querySelectorAll(selector)];
 const root = document.documentElement;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const compactLayout = matchMedia("(max-width: 800px), (max-height: 560px)");
+const hasWindowTransitions = typeof document.startViewTransition === "function";
 const activeLabel = $("#active-app");
+const desktop = $(".desktop");
+const track = $("#workspace-track");
 const windows = new Map();
 const initialRoute = readRoute(location.pathname, siteBase.pathname) ?? { workspace: "home" };
 let workspaceIndex = workspaces.findIndex(({ id }) => id === initialRoute.workspace);
@@ -35,8 +40,8 @@ const spaces = workspaces.map((config, index) => {
   tiles.className = "tiles";
   el.append(tiles);
   $("#workspaces").append(button);
-  $("#workspace-track").append(el);
-  return { ...config, el, index, button, tiles, windows: [], active: null, maximized: null };
+  track.append(el);
+  return { ...config, el, index, button, tiles, windows: [], active: null, maximized: null, tiledScroll: 0 };
 });
 
 // Sample a critically damped spring and let the browser interpolate the transforms.
@@ -80,23 +85,37 @@ function renderLayout(space) {
   if (space.index === workspaceIndex) updateActiveLabel();
 }
 
-function commitLayout(space, change) {
-  const animate = !reduceMotion.matches && space.index === workspaceIndex;
+function canAnimateLayout(space) {
+  return !reduceMotion.matches && space.index === workspaceIndex
+    && Math.abs(space.el.getBoundingClientRect().top - desktop.getBoundingClientRect().top) < 1;
+}
+
+function commitLayout(space, change, { primary = space.active, after } = {}) {
+  const apply = () => {
+    for (const record of space.windows) record.geometry?.cancel();
+    change();
+    renderLayout(space);
+    after?.();
+  };
+  const animate = canAnimateLayout(space);
+  if (animate && hasWindowTransitions) {
+    animateWindowLayout(space.windows, primary?.el, apply, () => canAnimateLayout(space));
+    return;
+  }
+
   const before = new Map(animate ? space.windows.filter(({ el }) => !el.hidden)
     .map((record) => [record, record.el.getBoundingClientRect()]) : []);
-  for (const record of space.windows) record.geometry?.cancel();
-  change();
-  renderLayout(space);
+  apply();
   if (!animate) return;
 
-  const after = space.windows.filter(({ el }) => !el.hidden)
+  const newRects = space.windows.filter(({ el }) => !el.hidden)
     .map((record) => [record, record.el.getBoundingClientRect()]);
-  for (const [record, rect] of after) {
+  for (const [record, rect] of newRects) {
     const old = before.get(record);
     if (!old) {
       record.geometry = record.el.animate(
-        [{ transform: "translateY(12px) scale(.965)", opacity: 0 }, { transform: "none", opacity: 1 }],
-        { duration: 260, easing: spring },
+        [{ transform: "translateY(7px) scale(.985)", opacity: 0 }, { transform: "none", opacity: 1 }],
+        { duration: 300, easing: spring },
       );
       continue;
     }
@@ -116,18 +135,27 @@ function closeWindow(record) {
   const hadFocus = el.contains(document.activeElement);
   const finish = () => {
     record.closing = null;
-    const recoverFocus = hadFocus && (el.contains(document.activeElement) || document.activeElement === document.body);
-    record.api.close?.();
+    let restoreTiles = false;
+    let recoverFocus = false;
     commitLayout(space, () => {
+      if (!record.open) return;
+      recoverFocus = hadFocus && (el.contains(document.activeElement) || document.activeElement === document.body);
+      record.api.close?.();
       record.open = false;
       el.inert = false;
-      if (space.maximized === record) space.maximized = null;
+      restoreTiles = space.maximized === record;
+      if (restoreTiles) space.maximized = null;
+    }, {
+      primary: record,
+      after() {
+        if (restoreTiles) space.el.scrollTop = space.tiledScroll;
+        if (recoverFocus && workspaceIndex === space.index) {
+          (space.active?.el ?? $("#launch-button")).focus({ preventScroll: true });
+        }
+      },
     });
-    if (recoverFocus && workspaceIndex === space.index) {
-      (space.active?.el ?? $("#launch-button")).focus({ preventScroll: true });
-    }
   };
-  if (reduceMotion.matches) {
+  if (hasWindowTransitions || !canAnimateLayout(space)) {
     finish();
     return;
   }
@@ -148,9 +176,13 @@ function toggleMaximize(record) {
   const { space } = record;
   if (!record.open || record.closing) return;
   commitLayout(space, () => {
+    if (!record.open || record.closing) return;
+    if (!space.maximized) space.tiledScroll = space.el.scrollTop;
     space.active = record;
     space.maximized = space.maximized === record ? null : record;
-    if (space.maximized) space.el.scrollTop = 0;
+  }, {
+    primary: record,
+    after: () => { space.el.scrollTop = space.maximized ? 0 : space.tiledScroll; },
   });
 }
 
@@ -185,6 +217,7 @@ function switchWorkspace(index) {
   if (!spaces[index]) return;
   setPanel(null);
   if (workspaceIndex === index) return;
+  finishWindowLayout();
   const focusWasInWorkspace = spaces[workspaceIndex].el.contains(document.activeElement);
   workspaceIndex = index;
   root.style.setProperty("--workspace-index", index);
@@ -204,17 +237,29 @@ function cancelClose(record) {
   record.el.inert = false;
 }
 
-function showWindow(record) {
+function showWindow(record, onShown) {
   const { space } = record;
   cancelClose(record);
+  const shown = () => {
+    if (space.index !== workspaceIndex) return;
+    focusWindow(record);
+    onShown?.();
+  };
   if (!record.open || (space.maximized && space.maximized !== record)) {
+    let restoreTiles = false;
     commitLayout(space, () => {
       record.open = true;
+      restoreTiles = Boolean(space.maximized);
       space.maximized = null;
       space.active = record;
+    }, {
+      primary: record,
+      after() {
+        if (restoreTiles) space.el.scrollTop = space.tiledScroll;
+        shown();
+      },
     });
-  }
-  focusWindow(record);
+  } else shown();
 }
 
 function revealWindow(record, instant = false) {
@@ -230,11 +275,16 @@ function revealWindow(record, instant = false) {
 function openApp(id, { keyboard = false } = {}) {
   const record = windows.get(id);
   if (!record) return;
+  finishWindowLayout();
   goToWorkspace(record.space.index);
-  showWindow(record);
-  revealWindow(record);
-  const { el } = record;
-  if (keyboard) el.focus({ preventScroll: true });
+  showWindow(record, () => {
+    revealWindow(record);
+    if (keyboard) record.el.focus({ preventScroll: true });
+  });
+}
+
+function openArticle(slug, { origin, keyboard = false } = {}) {
+  navigate({ workspace: "articles", slug }, { origin, revealArticle: true, keyboard });
 }
 
 function mountWindow(app, space, open) {
@@ -256,7 +306,7 @@ function mountWindow(app, space, open) {
   windows.set(app.id, record);
   space.windows.push(record);
   space.tiles.append(el);
-  record.api = app.mount($(".window-body", el), { openApp }) ?? {};
+  record.api = app.mount($(".window-body", el), { openApp, openArticle, actions: $(".window-actions", el) }) ?? {};
   el.addEventListener("pointerdown", () => focusWindow(record));
   el.addEventListener("focusin", () => focusWindow(record));
   maxButton.addEventListener("click", () => toggleMaximize(record));
@@ -274,11 +324,13 @@ for (const space of spaces) {
 }
 
 function captureView(origin = document.activeElement) {
+  finishWindowLayout();
   const space = spaces[workspaceIndex];
   return {
     space,
     active: space.active,
     maximized: space.maximized?.closing ? null : space.maximized,
+    tiledScroll: space.tiledScroll,
     windows: space.windows.map((record) => ({
       record, open: record.open && !record.closing, state: record.api.capture?.(),
     })),
@@ -299,6 +351,7 @@ function restoreLayout(snapshot) {
   }
   space.active = snapshot.active;
   space.maximized = snapshot.maximized;
+  space.tiledScroll = snapshot.tiledScroll;
   renderLayout(space);
 }
 
@@ -322,12 +375,13 @@ function displayRoute(route, { snapshot, revealArticle = false, keyboard = false
     lastArticle = route.slug;
     post = route.slug ? postBySlug.get(route.slug) : posts[0];
     const reader = windows.get("reader");
-    if (revealArticle) showWindow(reader);
     reader.api.show(post, route.slug);
     windows.get("archive").api.select(post?.slug);
     if (revealArticle) {
-      revealWindow(reader, true);
-      if (keyboard) reader.api.focus();
+      showWindow(reader, () => {
+        revealWindow(reader, true);
+        if (keyboard) reader.api.focus();
+      });
     }
   }
   document.title = pageTitle(route, post);

@@ -1,5 +1,4 @@
 import { profile } from "../profile.js";
-import { routePath } from "./routes.js";
 
 const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 export const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => entities[ch]);
@@ -40,13 +39,9 @@ export function profileMarkup(interests = []) {
   </div>`;
 }
 
-export function projectsMarkup(posts, hrefFor) {
-  const note = posts.find(({ slug }) => slug === "blog-as-desktop");
-  const name = note
-    ? `<a class="project-link" data-blog-link href="${escapeHtml(hrefFor(routePath({ workspace: "articles", slug: note.slug })))}">niri-desktop</a>`
-    : "niri-desktop";
+export function projectsMarkup() {
   return `<div class="project-content">
-    <h2>${name}</h2>
+    <h2><a class="project-link" href="https://github.com/frozenf1sh/niri-desktop-blog" target="_blank" rel="noopener noreferrer">niri-desktop-blog</a></h2>
     <p>受 niri 启发的个人博客。文件和终端留在桌面，文章在独立的工作区里阅读。</p>
     <div class="post-meta"><span>JavaScript</span><span>Vite</span></div>
   </div>`;

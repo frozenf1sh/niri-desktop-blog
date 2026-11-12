@@ -173,6 +173,72 @@ body.night .wallpaper { filter: sepia(.26) saturate(.85); }
   border-color: #cfb9f2;
   box-shadow: 0 0 0 1px #d5baff50, 0 18px 46px #1610206b, 0 2px 6px #1610204d;
 }
+
+:root[data-window-transition] { view-transition-name: none; }
+
+::view-transition {
+  pointer-events: none;
+  clip-path: inset(var(--desktop-top) 0 0);
+  filter: brightness(calc(1 - var(--dimming)));
+}
+
+::view-transition-group(*) {
+  animation-duration: 370ms;
+  animation-timing-function: cubic-bezier(.25, .63, .27, 1);
+}
+
+::view-transition-group(window-active) { z-index: 1; }
+
+::view-transition-image-pair(*) {
+  overflow: clip;
+  border-radius: 20px;
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  width: 100%;
+  height: 100%;
+  object-fit: none;
+  object-position: top left;
+  animation-duration: 370ms;
+  animation-timing-function: cubic-bezier(.32, .15, .45, 1);
+}
+
+::view-transition-old(*):only-child { animation: window-depart 290ms ease-in-out both; }
+::view-transition-new(*):only-child { animation: window-arrive 310ms var(--ease) both; }
+
+:root[data-window-resize]::view-transition-image-pair(window-active) {
+  background: linear-gradient(var(--title-bar) 45px, var(--surface) 45px);
+  box-shadow: 0 0 0 1px #cfb9f27d, 0 15px 38px #16102060;
+}
+
+:root[data-window-resize]::view-transition-old(window-active) {
+  mix-blend-mode: normal;
+  animation: window-content-out 370ms linear both;
+}
+
+:root[data-window-resize]::view-transition-new(window-active) {
+  mix-blend-mode: normal;
+  animation: window-content-in 370ms linear both;
+}
+
+@keyframes window-content-out {
+  0%, 18% { opacity: 1; }
+  44%, 100% { opacity: 0; }
+}
+
+@keyframes window-content-in {
+  0%, 42% { opacity: 0; }
+  72%, 100% { opacity: 1; }
+}
+
+@keyframes window-depart {
+  to { opacity: 0; transform: translateY(5px) scale(.99); }
+}
+
+@keyframes window-arrive {
+  from { opacity: 0; transform: translateY(6px) scale(.99); }
+}
 .window-bar {
   display: flex;
   flex: 0 0 45px;
@@ -310,36 +376,6 @@ body.night .wallpaper { filter: sepia(.26) saturate(.85); }
 .file-view.is-list .file-thumb { width: 25px; height: 24px; }
 .file-view.is-list .file-thumb .icon { width: 14px; height: 14px; }
 .image-preview { display: block; max-width: 100%; max-height: 100%; margin: auto; border-radius: 10px; object-fit: contain; }
-
-.terminal-shell {
-  height: 100%;
-  padding: 19px 21px;
-  overflow: auto;
-  scrollbar-width: thin;
-  font: 12px/1.8 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  color: #e6e1ee;
-}
-.terminal-row { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
-.terminal-row.command { margin-top: 7px; }
-.terminal-row.command:first-child { margin-top: 0; }
-.terminal-row.output { color: #c8bdd7; }
-.terminal-row.directories { color: #bcb2ec; }
-.terminal-prompt { flex: none; color: #a9dfcb; font-weight: 650; white-space: pre; }
-.terminal-form { display: flex; margin-top: 7px; gap: 5px; align-items: center; }
-.terminal-input {
-  min-width: 0;
-  width: 100%;
-  border: 0;
-  border-radius: 4px;
-  outline: none;
-  background: transparent;
-  caret-color: #c8b3fb;
-  font: inherit;
-  padding: 0 2px;
-}
-.terminal-input::placeholder { color: #ad98d1; opacity: 1; }
-.terminal-input:focus::placeholder { opacity: 0; }
-.terminal-input:focus-visible { outline: none; }
 
 .player {
   display: flex;
