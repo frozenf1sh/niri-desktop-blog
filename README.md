@@ -12,6 +12,17 @@ mise exec -- pnpm dev
 
 `pnpm check` 检查 JavaScript 语法并运行终端测试，`pnpm build` 生成 `dist/`，`pnpm preview` 在 [4398 端口](http://127.0.0.1:4398/) 预览构建产物。
 
+## Docker
+
+```sh
+docker build -t niri-desktop-blog .
+docker run --rm -p 127.0.0.1:8080:8080 niri-desktop-blog
+```
+
+容器启动后打开 [本地博客](http://127.0.0.1:8080/)。镜像在构建阶段生成静态页面，运行时由非 root Nginx 提供首页、文章和资源。
+
+## 桌面操作
+
 - 左上角的药丸切换工作区。也可以用 `Alt+1/2/3`、`Alt+↑/↓`，或在宽屏桌面的空白处滚动。
 - 点窗口标题栏右侧的按钮可以最大化、还原或关闭窗口；左上角的九宫格可重新打开应用。
 - 右上角打开控制中心。网络、蓝牙和勿扰是界面状态；音量影响播放器，亮度和夜间模式作用在页面上。
