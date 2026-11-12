@@ -127,22 +127,23 @@ body.night .wallpaper { filter: sepia(.26) saturate(.85); }
   transform: translate3d(0, calc(-100% * var(--workspace-index)), 0);
   transition: transform 560ms var(--spring);
 }
-.workspace { position: absolute; inset: 0; overflow: hidden; }
-.workspace:nth-child(2) { top: 100%; bottom: -100%; }
-.workspace:nth-child(3) { top: 200%; bottom: -200%; }
+.workspace {
+  position: absolute;
+  inset: calc(100% * var(--workspace-slot)) 0 calc(-100% * var(--workspace-slot));
+  overflow: hidden;
+}
 .tiles {
   width: min(86%, 1280px);
   height: min(74%, 620px);
   min-height: 350px;
   margin: clamp(20px, 4.8vh, 48px) auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.58fr) minmax(0, 1fr);
+  grid-template-columns: var(--tile-columns, minmax(0, 1.58fr) minmax(0, 1fr));
   grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr));
   gap: 16px;
 }
-#workspace-2 .tiles:not([data-maximized]) { grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr); }
 .tiles[data-count="3"] { grid-template-rows: minmax(0, 1.18fr) minmax(0, 1fr); }
-.tiles[data-count="1"], #workspace-2 .tiles[data-count="1"]:not([data-maximized]) {
+.tiles[data-count="1"] {
   width: min(740px, 86%);
   grid-template-columns: minmax(0, 1fr);
 }
@@ -200,11 +201,6 @@ body.night .wallpaper { filter: sepia(.26) saturate(.85); }
 .icon-button:not(:disabled):hover { color: var(--text); background: #ffffff12; }
 .window-close:not(:disabled):hover { color: #ffd1da; background: #e5879b24; }
 .window-body { min-height: 0; flex: 1 1 auto; overflow: auto; scrollbar-width: thin; }
-.window[data-app="files"] { --app-color: #d1b9ff; }
-.window[data-app="terminal"] { --app-color: #a5decb; }
-.window[data-app="music"] { --app-color: #f0b9d7; }
-.window[data-app="notes"] { --app-color: #f3cf99; }
-.window[data-app="calendar"] { --app-color: #aebeff; }
 
 .file-app {
   height: 100%;
@@ -518,7 +514,7 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
 @media (max-width: 800px), (max-height: 560px) {
   :root { --inset: 11px; --bar-height: 44px; }
   .workspace { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-  .tiles, #workspace-2 .tiles:not([data-maximized]), .tiles[data-count="1"], .tiles[data-count="3"], #workspace-2 .tiles[data-count="1"]:not([data-maximized]) {
+  .tiles, .tiles[data-count="1"], .tiles[data-count="3"] {
     width: min(720px, calc(100% - 2 * var(--inset)));
     min-height: 0;
     height: auto;

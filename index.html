@@ -4,9 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#191722">
-  <title>niri desktop</title>
+  <meta name="description" content="Felix 的个人博客">
+  <meta name="site-root" content="%BASE_URL%">
+  <title>Felix · 桌面</title>
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./blog/blog.css">
   <script type="module" src="./desktop.js"></script>
 </head>
 <body>
@@ -63,11 +66,7 @@
       <button class="bar-button launch-button" id="launch-button" aria-label="应用程序" aria-controls="launcher" aria-expanded="false" title="应用程序">
         <svg class="icon" aria-hidden="true"><use href="#i-apps"/></svg>
       </button>
-      <nav class="workspaces" aria-label="工作区">
-        <button class="workspace-button" data-workspace="0" aria-label="工作区 1" aria-pressed="true" title="工作区 1"><span></span></button>
-        <button class="workspace-button" data-workspace="1" aria-label="工作区 2" aria-pressed="false" title="工作区 2"><span></span></button>
-        <button class="workspace-button" data-workspace="2" aria-label="工作区 3" aria-pressed="false" title="工作区 3"><span></span></button>
-      </nav>
+      <nav class="workspaces" id="workspaces" aria-label="工作区"></nav>
       <div class="active-app" id="active-app">
         <svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg><span>文件</span>
       </div>
@@ -87,11 +86,7 @@
   </header>
 
   <main class="desktop" aria-label="桌面">
-    <div class="workspace-track" id="workspace-track">
-      <section class="workspace" id="workspace-1" aria-label="工作区 1"><div class="tiles"></div></section>
-      <section class="workspace" id="workspace-2" aria-label="工作区 2" inert><div class="tiles"></div></section>
-      <section class="workspace" id="workspace-3" aria-label="工作区 3" inert><div class="tiles"></div></section>
-    </div>
+    <div class="workspace-track" id="workspace-track"></div>
   </main>
 
   <section class="popover launcher" id="launcher" aria-label="应用程序" inert></section>
@@ -127,5 +122,6 @@
       </div>
     </div>
   </section>
+  <!-- static-page -->
 </body>
 </html>

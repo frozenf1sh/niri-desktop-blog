@@ -11,9 +11,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node --check desktop.js && node --check apps.js"
+    "check": "node --check desktop.js && node --check apps.js && node --check terminal/view.js && node --test"
   },
   "devDependencies": {
-    "vite": "8.3.8"
+    "markdown-it": "15.0.3",
+    "vite": "8.3.8",
+    "yaml": "2.9.1"
   }
 }

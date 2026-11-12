@@ -1,17 +1,43 @@
 import { apps, icon, paintRange, readSetting, writeSetting } from "./apps.js";
+import { postBySlug, posts, siteBase } from "./blog/content.js";
+import { pageTitle } from "./blog/markup.js";
+import { connectNavigation } from "./blog/navigation.js";
+import { readRoute, workspaces } from "./blog/routes.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const all = (selector, root = document) => [...root.querySelectorAll(selector)];
 const root = document.documentElement;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const compactLayout = matchMedia("(max-width: 800px), (max-height: 560px)");
-const workspaceButtons = all(".workspace-button");
 const activeLabel = $("#active-app");
 const windows = new Map();
-const spaces = all(".workspace").map((el, index) => ({
-  el, index, tiles: $(".tiles", el), windows: [], active: null, maximized: null,
-}));
-let workspaceIndex = 0;
+const initialRoute = readRoute(location.pathname, siteBase.pathname) ?? { workspace: "home" };
+let workspaceIndex = workspaces.findIndex(({ id }) => id === initialRoute.workspace);
+root.style.setProperty("--workspace-index", workspaceIndex);
+const spaces = workspaces.map((config, index) => {
+  const active = index === workspaceIndex;
+  const button = document.createElement("button");
+  button.className = "workspace-button";
+  button.dataset.workspace = config.id;
+  button.title = config.label;
+  button.setAttribute("aria-label", config.label);
+  button.setAttribute("aria-pressed", String(active));
+  button.append(document.createElement("span"));
+
+  const el = document.createElement("section");
+  el.className = "workspace";
+  el.id = `workspace-${config.id}`;
+  el.dataset.workspace = config.id;
+  el.setAttribute("aria-label", config.label);
+  el.style.setProperty("--workspace-slot", index);
+  el.inert = !active;
+  const tiles = document.createElement("div");
+  tiles.className = "tiles";
+  el.append(tiles);
+  $("#workspaces").append(button);
+  $("#workspace-track").append(el);
+  return { ...config, el, index, button, tiles, windows: [], active: null, maximized: null };
+});
 
 // Sample a critically damped spring and let the browser interpolate the transforms.
 const settle = (t) => 1 - (1 + t) * Math.exp(-t);
@@ -91,7 +117,7 @@ function closeWindow(record) {
   const finish = () => {
     record.closing = null;
     const recoverFocus = hadFocus && (el.contains(document.activeElement) || document.activeElement === document.body);
-    record.onClose?.();
+    record.api.close?.();
     commitLayout(space, () => {
       record.open = false;
       el.inert = false;
@@ -165,21 +191,22 @@ function switchWorkspace(index) {
   for (const space of spaces) {
     const active = space.index === index;
     space.el.inert = !active;
-    workspaceButtons[space.index].setAttribute("aria-pressed", String(active));
+    space.button.setAttribute("aria-pressed", String(active));
   }
-  if (focusWasInWorkspace) workspaceButtons[index].focus({ preventScroll: true });
+  if (focusWasInWorkspace) spaces[index].button.focus({ preventScroll: true });
   updateActiveLabel();
 }
 
-function openApp(id, { keyboard = false } = {}) {
-  const record = windows.get(id);
-  if (!record) return;
-  const { space, el } = record;
-  if (record.closing) {
-    record.closing.cancel();
-    record.closing = null;
-    el.inert = false;
-  }
+function cancelClose(record) {
+  if (!record.closing) return;
+  record.closing.cancel();
+  record.closing = null;
+  record.el.inert = false;
+}
+
+function showWindow(record) {
+  const { space } = record;
+  cancelClose(record);
   if (!record.open || (space.maximized && space.maximized !== record)) {
     commitLayout(space, () => {
       record.open = true;
@@ -187,22 +214,34 @@ function openApp(id, { keyboard = false } = {}) {
       space.active = record;
     });
   }
-  switchWorkspace(space.index);
   focusWindow(record);
+}
+
+function revealWindow(record, instant = false) {
+  const { space, el } = record;
   if (compactLayout.matches) {
     const top = el.offsetTop;
     if (top < space.el.scrollTop || top + el.offsetHeight > space.el.scrollTop + space.el.clientHeight) {
-      space.el.scrollTo({ top: Math.max(0, top - 4), behavior: reduceMotion.matches ? "instant" : "smooth" });
+      space.el.scrollTo({ top: Math.max(0, top - 4), behavior: instant || reduceMotion.matches ? "instant" : "smooth" });
     }
   }
+}
+
+function openApp(id, { keyboard = false } = {}) {
+  const record = windows.get(id);
+  if (!record) return;
+  goToWorkspace(record.space.index);
+  showWindow(record);
+  revealWindow(record);
+  const { el } = record;
   if (keyboard) el.focus({ preventScroll: true });
 }
 
-for (const app of apps) {
-  const space = spaces[app.workspace];
+function mountWindow(app, space, open) {
   const el = document.createElement("article");
   el.className = "window";
   el.dataset.app = app.id;
+  el.style.setProperty("--app-color", app.color);
   el.tabIndex = -1;
   el.setAttribute("aria-labelledby", `title-${app.id}`);
   el.innerHTML = `<header class="window-bar">
@@ -213,11 +252,11 @@ for (const app of apps) {
     </div>
   </header><div class="window-body"></div>`;
   const maxButton = $("[data-max]", el);
-  const record = { app, el, space, maxButton, open: true, closing: null, geometry: null };
+  const record = { app, el, space, maxButton, open, closing: null, geometry: null };
   windows.set(app.id, record);
   space.windows.push(record);
   space.tiles.append(el);
-  record.onClose = app.mount($(".window-body", el), openApp);
+  record.api = app.mount($(".window-body", el), { openApp }) ?? {};
   el.addEventListener("pointerdown", () => focusWindow(record));
   el.addEventListener("focusin", () => focusWindow(record));
   maxButton.addEventListener("click", () => toggleMaximize(record));
@@ -226,7 +265,100 @@ for (const app of apps) {
     if (!event.target.closest("button")) toggleMaximize(record);
   });
 }
-for (const space of spaces) renderLayout(space);
+
+const appById = new Map(apps.map((app) => [app.id, app]));
+for (const space of spaces) {
+  for (const id of space.apps) mountWindow(appById.get(id), space, true);
+  for (const id of space.utilities ?? []) mountWindow(appById.get(id), space, false);
+  renderLayout(space);
+}
+
+function captureView(origin = document.activeElement) {
+  const space = spaces[workspaceIndex];
+  return {
+    space,
+    active: space.active,
+    maximized: space.maximized?.closing ? null : space.maximized,
+    windows: space.windows.map((record) => ({
+      record, open: record.open && !record.closing, state: record.api.capture?.(),
+    })),
+    scroll: [space.el, ...all(".window-body, [data-scroll]", space.el)].map((el) => [el, el.scrollTop]),
+    focus: origin,
+    focusHref: origin?.closest?.("a[data-blog-link]")?.href,
+  };
+}
+
+function restoreLayout(snapshot) {
+  const { space } = snapshot;
+  for (const { record, open, state } of snapshot.windows) {
+    cancelClose(record);
+    record.geometry?.cancel();
+    if (record.open && !open) record.api.close?.();
+    record.open = open;
+    record.api.restore?.(state);
+  }
+  space.active = snapshot.active;
+  space.maximized = snapshot.maximized;
+  renderLayout(space);
+}
+
+function restorePosition(snapshot) {
+  let focus = snapshot.focus;
+  if (!focus?.isConnected && snapshot.focusHref) {
+    focus = all("a[data-blog-link]", snapshot.space.el).find((link) => link.href === snapshot.focusHref);
+  }
+  if (focus?.isConnected && !focus.closest("[hidden], [inert]")) focus.focus({ preventScroll: true });
+  for (const [el, top] of snapshot.scroll) el.scrollTop = top;
+}
+
+let lastArticle;
+function displayRoute(route, { snapshot, revealArticle = false, keyboard = false } = {}) {
+  const space = spaces.find(({ id }) => id === route.workspace);
+  switchWorkspace(space.index);
+  if (snapshot) restoreLayout(snapshot);
+
+  let post;
+  if (route.workspace === "articles") {
+    lastArticle = route.slug;
+    post = route.slug ? postBySlug.get(route.slug) : posts[0];
+    const reader = windows.get("reader");
+    if (revealArticle) showWindow(reader);
+    reader.api.show(post, route.slug);
+    windows.get("archive").api.select(post?.slug);
+    if (revealArticle) {
+      revealWindow(reader, true);
+      if (keyboard) reader.api.focus();
+    }
+  }
+  document.title = pageTitle(route, post);
+  if (snapshot) restorePosition(snapshot);
+}
+
+const navigate = connectNavigation({ base: siteBase, capture: captureView, display: displayRoute });
+function goToWorkspace(index) {
+  const space = spaces[index];
+  if (!space) return;
+  if (index === workspaceIndex) {
+    setPanel(null);
+    return;
+  }
+  navigate({ workspace: space.id, slug: space.id === "articles" ? lastArticle : undefined });
+}
+displayRoute(initialRoute, { revealArticle: Boolean(initialRoute.slug) });
+$("#static-page")?.remove();
+document.body.classList.remove("has-static-page");
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a[data-blog-link]");
+  if (!link || event.defaultPrevented || event.button !== 0
+      || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+  const url = new URL(link.href);
+  if (url.origin !== siteBase.origin) return;
+  const route = readRoute(url.pathname, siteBase.pathname);
+  if (!route) return;
+  event.preventDefault();
+  navigate(route, { origin: link, revealArticle: Boolean(route.slug), keyboard: event.detail === 0 });
+});
 
 $("#launcher").innerHTML = apps.map((app) => `<button class="launch-app" data-open="${app.id}" style="--app-color:${app.color}">
   <span class="launch-icon">${icon(app.icon)}</span><span>${app.title}</span></button>`).join("");
@@ -234,7 +366,7 @@ $("#launcher").addEventListener("click", (event) => {
   const app = event.target.closest("[data-open]");
   if (app) openApp(app.dataset.open, { keyboard: event.detail === 0 });
 });
-for (const button of workspaceButtons) button.addEventListener("click", () => switchWorkspace(Number(button.dataset.workspace)));
+for (const space of spaces) space.button.addEventListener("click", () => goToWorkspace(space.index));
 
 document.addEventListener("keydown", (event) => {
   if (event.defaultPrevented || event.isComposing) return;
@@ -244,10 +376,10 @@ document.addEventListener("keydown", (event) => {
     else return;
     event.preventDefault();
   } else if (event.altKey && !event.ctrlKey && !event.metaKey) {
-    const number = /^Digit([1-3])$/.exec(event.code);
-    if (number) switchWorkspace(Number(number[1]) - 1);
-    else if (event.code === "ArrowUp") switchWorkspace(workspaceIndex - 1);
-    else if (event.code === "ArrowDown") switchWorkspace(workspaceIndex + 1);
+    const number = /^Digit([1-9])$/.exec(event.code);
+    if (number && spaces[Number(number[1]) - 1]) goToWorkspace(Number(number[1]) - 1);
+    else if (event.code === "ArrowUp") goToWorkspace(workspaceIndex - 1);
+    else if (event.code === "ArrowDown") goToWorkspace(workspaceIndex + 1);
     else return;
     event.preventDefault();
   }
@@ -268,7 +400,7 @@ $(".desktop").addEventListener("wheel", (event) => {
   if (wheelSwitched) return;
   wheelDistance += event.deltaY * (event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? innerHeight : 1);
   if (Math.abs(wheelDistance) > 72) {
-    switchWorkspace(workspaceIndex + Math.sign(wheelDistance));
+    goToWorkspace(workspaceIndex + Math.sign(wheelDistance));
     wheelSwitched = true;
   }
 }, { passive: true });

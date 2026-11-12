@@ -1,0 +1,349 @@
+.workspace[data-workspace="articles"] {
+  --tile-columns: minmax(205px, .34fr) minmax(0, 1fr);
+}
+
+.workspace[data-workspace="about"] {
+  --tile-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+@media (min-width: 801px) and (min-height: 561px) {
+  .workspace[data-workspace="articles"] .tiles:not([data-maximized]) {
+    height: min(82%, 720px);
+  }
+
+  .workspace[data-workspace="about"] .tiles[data-count="2"]:not([data-maximized]) {
+    width: min(86%, 1000px);
+    height: min(56%, 370px);
+    min-height: 290px;
+  }
+
+  .tiles[data-count="1"]:not([data-maximized]):has(> .window[data-app="reader"]:not([hidden])) {
+    width: min(920px, 86%);
+  }
+}
+
+.post-file {
+  text-decoration: none;
+}
+
+.file-post-name {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.file-post-name time {
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.file-view.is-list .file-post-name {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.post-file:focus-visible,
+.archive-entry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.archive-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.archive-toolbar {
+  padding: 10px;
+  border-bottom: 1px solid #ffffff0a;
+  background: #211e2a;
+}
+
+.archive-toolbar input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ffffff12;
+  border-radius: 8px;
+  background: #17151f;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.archive-toolbar input::placeholder {
+  color: var(--muted);
+}
+
+.archive-list {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 11px 9px;
+  scrollbar-width: thin;
+}
+
+.archive-year + .archive-year {
+  margin-top: 14px;
+}
+
+.archive-year h3 {
+  margin: 0;
+  padding: 3px 9px 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.archive-year ul,
+.profile-interests {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archive-entry {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 4px;
+  padding: 9px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.archive-entry:hover,
+.archive-entry[aria-current="page"] {
+  background: #ab84ff1a;
+}
+
+.archive-entry[aria-current="page"] {
+  border-color: #cfbaff26;
+  color: var(--accent);
+}
+
+.archive-title {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.archive-entry .post-meta {
+  font-size: 10px;
+}
+
+.reader-body {
+  overscroll-behavior: contain;
+}
+
+.post {
+  max-width: 770px;
+  margin: 0 auto;
+  padding: clamp(22px, 3.7vw, 48px);
+  color: #ece7f1;
+}
+
+.post-header {
+  margin-bottom: 22px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid #ffffff13;
+}
+
+.post h1 {
+  margin: 7px 0 0;
+  font-size: clamp(24px, 2.7vw, 36px);
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+.post h1:focus {
+  outline: none;
+}
+
+.post-body {
+  color: #d9d2e2;
+  font-size: 15px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.post-body p {
+  margin: 0 0 16px;
+}
+
+.post-body h2,
+.post-body h3 {
+  margin: 28px 0 9px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.post-body h2 { font-size: 19px; }
+.post-body h3 { font-size: 16px; }
+
+.post-body code {
+  font: .89em "SFMono-Regular", Consolas, monospace;
+  color: #d5c3fc;
+}
+
+.post-body :not(pre) > code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #ab84ff15;
+}
+
+.post-body pre {
+  overflow: auto;
+  padding: 12px 15px;
+  border: 1px solid #ffffff0b;
+  border-radius: 10px;
+  background: #15131c;
+}
+
+.post-body img { max-width: 100%; height: auto; }
+.post-body a,
+.project-link,
+.static-index a { color: var(--accent); text-underline-offset: 3px; }
+
+.archive-empty,
+.reader-empty {
+  margin: 16px;
+  color: var(--muted);
+}
+
+.profile-content,
+.project-content {
+  padding: clamp(20px, 3vw, 40px);
+  line-height: 1.75;
+}
+
+.profile-content h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.2;
+}
+
+.profile-host {
+  color: var(--accent);
+  font: 12px "SFMono-Regular", Consolas, monospace;
+}
+
+.profile-content p,
+.project-content p {
+  max-width: 42em;
+  margin: 17px 0;
+  color: #d9d2e2;
+}
+
+.profile-content h2 {
+  margin: 20px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.profile-interests li {
+  padding: 2px 9px;
+  border: 1px solid #cfbaff20;
+  border-radius: 7px;
+  background: #ab84ff10;
+  color: #e4d7f4;
+  font-size: 12px;
+}
+
+.project-content h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.project-content p {
+  margin: 9px 0 13px;
+}
+
+.has-static-page > .desktop,
+.has-static-page > .top-bar {
+  visibility: hidden;
+}
+
+.static-page {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  padding: 22px 12px;
+}
+
+.static-inner {
+  max-width: 770px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #62576f;
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.static-nav {
+  display: flex;
+  gap: 18px;
+  padding: 13px 20px;
+  border-bottom: 1px solid #ffffff0e;
+  background: var(--title-bar);
+}
+
+.static-nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.static-nav a[aria-current="page"],
+.static-nav a:hover {
+  color: var(--accent);
+}
+
+.static-index {
+  padding: 20px 24px 30px;
+}
+
+.static-index li {
+  margin: 10px 0;
+}
+
+.static-index time {
+  margin-inline-start: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 800px), (max-height: 560px) {
+  .tiles:not([data-maximized]) .window[data-app="archive"] {
+    height: 255px;
+  }
+
+  .tiles:not([data-maximized]) .window[data-app="reader"] {
+    height: max(360px, calc(100dvh - var(--desktop-top) - 28px));
+  }
+
+  .tiles:not([data-maximized]) .window[data-app="profile"] {
+    min-height: 270px;
+  }
+
+  .reader-body {
+    overscroll-behavior: auto;
+  }
+}
