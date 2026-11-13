@@ -65,3 +65,11 @@ read browser-terminal
 > Use case: stylized-concept. Asset: full-bleed desktop wallpaper for a dark graphite, rounded Linux desktop. Create an exquisite, quiet 16:9 landscape painting of a Japanese coastal headland at blue hour: expansive hazy lilac and warm dusty peach sky fading into cool slate-blue, a tiny pale moon upper left, layers of faraway island silhouettes and a still, softly reflective bay. A dark indigo coastal slope curves in from the bottom right; subtle reeds and rock details along the bottom edge. Hand-painted anime background art with subtle film grain and luminous atmospheric perspective. Keep the upper third airy, the center low in detail for windows placed over it, and the coastline beautiful and discernible along the bottom and sides. Mid-to-low contrast, softened sunset colors, restrained highlights, visually clear at wallpaper size. Full edge-to-edge landscape, no borders, no people, no lettering, no icons, no UI, no watermark.
 
 音乐资源通过 `music/library.js` 的类型注册表交给适配器解析。`assets/music/塞壬唱片/` 中的 JSON 保存歌曲 ID，播放时通过同源 `/music-api/` 获取临时音频地址；专辑信息与歌词在浏览器缓存七天，音频和封面由浏览器按服务端缓存策略管理。开发与预览使用 Vite 代理，容器使用 Nginx 代理。默认随机选择塞壬唱片文件夹中的歌曲并尝试播放；浏览器阻止自动播放时，点击播放按钮即可。部署需要允许容器访问 DNS 和官方 HTTPS 接口，并确认所用音乐及素材的授权。
+
+### 文章排版
+
+文章使用 Markdown，支持引用、表格、图片、围栏代码块及代码高亮。代码块写语言名（如 `js`、`go`、`rust`、`python`、`bash`、`yaml`）；未知语言会按纯文本显示。阅读器中的代码块提供复制按钮。
+
+文章图片建议放在 `public/post-assets/<文章文件名>/`，在文章中用 `![图片说明](图片文件名.png)` 引用；构建后的独立页面和桌面阅读器会使用同一资源。外部 HTTPS 图片也可直接引用。
+
+可以用 `::: note 标题`、`::: tip 标题`、`::: warning 标题` 或 `::: danger 标题` 开始提示块，以单独一行 `:::` 结束；标题可省略，块内支持 Markdown。仓库内自己编写的文章也可以使用原始 HTML；这些 HTML 被视为可信内容，发布前应检查，不应将未受信任的内容直接放入文章。

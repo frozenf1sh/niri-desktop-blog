@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 280" role="img" aria-labelledby="title">
+  <title id="title">暮色中的山与月亮</title>
+  <rect width="840" height="280" fill="#282236"/>
+  <circle cx="650" cy="72" r="30" fill="#d9c8ed"/>
+  <path d="M0 240 190 100 320 209 455 120 620 238 730 155 840 235V280H0Z" fill="#62557c"/>
+  <path d="M0 256 135 183 280 259 415 184 565 260 710 196 840 250V280H0Z" fill="#3e3651"/>
+</svg>

@@ -1,46 +1,14 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import MarkdownIt from "markdown-it";
 import { normalizePath } from "vite";
-import { parse } from "yaml";
 import { profile } from "../profile.js";
+import { compilePost } from "./markdown.js";
 import { articleMarkup, escapeHtml, pageTitle, profileMarkup, projectsMarkup } from "./markup.js";
-import { postSlug, readRoute, routePath, sortPosts, workspaces } from "./routes.js";
+import { readRoute, routePath, sortPosts, workspaces } from "./routes.js";
 
 const postsDirectory = new URL("../content/posts/", import.meta.url);
 const postsPath = normalizePath(fileURLToPath(postsDirectory));
-const markdown = new MarkdownIt({ html: false });
-
-function compilePost(slug, source) {
-  const frontMatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  if (!postSlug.test(slug) || !frontMatter) {
-    throw new Error(`${slug}.md 需要使用英文文件名和 YAML front matter`);
-  }
-
-  const { title, date, description, tags = [] } = parse(frontMatter[1]) ?? {};
-  if (typeof title !== "string" || !title.trim() || typeof description !== "string" || !description.trim()
-      || typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)
-      || !Array.isArray(tags) || tags.some((tag) => typeof tag !== "string" || !tag.trim())) {
-    throw new Error(`${slug}.md 的 title、date、description 或 tags 格式不正确`);
-  }
-  const env = {};
-  const tokens = markdown.parse(source.slice(frontMatter[0].length), env);
-  const headings = [];
-  for (const [index, token] of tokens.entries()) {
-    if (token.type !== "heading_open" || token.level !== 0) continue;
-    const inline = tokens[index + 1];
-    const label = inline.children.map(({ content }) => content).join("").trim();
-    if (!label) continue;
-    const id = `post-${slug}-${headings.length + 1}`;
-    token.attrSet("id", id);
-    headings.push({ id, label, level: Number(token.tag.slice(1)) });
-  }
-  const html = markdown.renderer.render(tokens, markdown.options, env);
-  if (!html.trim()) throw new Error(`${slug}.md 缺少正文`);
-  return { slug, title: title.trim(), date, description: description.trim(), tags, html, headings, source };
-}
-
 async function loadPosts() {
   const files = await readdir(postsDirectory, { withFileTypes: true });
   const posts = await Promise.all(files.filter((file) => file.isFile() && file.name.endsWith(".md")).map(async ({ name }) =>
@@ -59,7 +27,7 @@ function renderPage(template, route, posts, interests) {
   const list = posts.map((item) => `<li><a href="${hrefFor(routePath({ workspace: "articles", slug: item.slug }))}">${escapeHtml(item.title)}</a>
     <time datetime="${item.date}">${item.date}</time></li>`).join("");
   let content;
-  if (post) content = articleMarkup(post);
+  if (post) content = articleMarkup(post, undefined, base);
   else if (route.workspace === "about") {
     content = `${profileMarkup(interests)}${projectsMarkup()}`;
   } else {

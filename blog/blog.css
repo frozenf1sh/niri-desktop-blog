@@ -452,3 +452,32 @@
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Markdown content shared by the desktop reader and static article pages. */
+.post-body blockquote {
+  margin: 20px 0;
+  padding: 8px 16px;
+  border-left: 3px solid #b9a0ed;
+  border-radius: 0 8px 8px 0;
+  background: #ab84ff10;
+  color: #c9bfd6;
+}
+.post-body blockquote > :last-child, .post-callout > :last-child { margin-bottom: 0; }
+.post-table-wrap { max-width: 100%; overflow-x: auto; margin: 20px 0; border: 1px solid #ffffff16; border-radius: 9px; }
+.post-body table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.post-body th, .post-body td { padding: 8px 12px; border-bottom: 1px solid #ffffff10; text-align: left; vertical-align: top; }
+.post-body th { background: #ffffff0a; color: var(--text); }
+.post-body tr:last-child td { border-bottom: 0; }
+.post-body th + th, .post-body td + td { border-left: 1px solid #ffffff10; }
+.post-body img { display: block; margin: 20px auto; border-radius: 9px; }
+.post-code { margin: 20px 0; overflow: hidden; border: 1px solid #ffffff16; border-radius: 10px; background: #1b1724; }
+.post-code-bar { display: flex; align-items: center; justify-content: space-between; min-height: 37px; padding: 0 12px 0 15px; border-bottom: 1px solid #ffffff12; background: #211c2b; color: var(--muted); font: 11px "SFMono-Regular", Consolas, monospace; }
+.post-code-copy { padding: 4px 8px; border-radius: 5px; color: #d8ccef; font: inherit; }
+.post-code-copy:hover { background: #ffffff18; }
+.post-body .post-code pre { margin: 0; padding: 14px 15px; border: 0; border-radius: 0; font-size: 13px; line-height: 1.65; overflow-x: auto; background: #1b1724 !important; }
+.post-body .post-code pre code { color: inherit; font: inherit; white-space: pre; }
+.post-callout { margin: 20px 0; padding: 12px 16px; border: 1px solid #aa95d143; border-left: 3px solid #bca5ef; border-radius: 9px; background: #ab84ff10; }
+.post-callout-title { margin-bottom: 6px; color: #e4d5ff; font-weight: 650; }
+.post-callout-warning { border-left-color: #e8bc71; background: #e8bc7110; }
+.post-callout-danger { border-left-color: #e58c98; background: #e58c9810; }
+.post-callout-tip { border-left-color: #85c7ab; background: #85c7ab10; }

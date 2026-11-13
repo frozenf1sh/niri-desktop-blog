@@ -1,4 +1,4 @@
-import { hrefFor, postHref, posts } from "./content.js";
+import { hrefFor, postHref, posts, siteBase } from "./content.js";
 import { articleMarkup, escapeHtml, interestsMarkup, postMeta, profileMarkup, projectsMarkup } from "./markup.js";
 import { mountReaderOutline } from "./reader-outline.js";
 import { searchPosts } from "./search.js";
@@ -64,6 +64,20 @@ export function mountReader(root, { windowId }) {
   scroll.dataset.scroll = "";
   root.append(scroll);
   const setHeadings = mountReaderOutline(scroll, windowId);
+  scroll.addEventListener("click", async (event) => {
+    const button = event.target.closest(".post-code-copy");
+    if (!button || !scroll.contains(button)) return;
+    const code = button.closest(".post-code").querySelector("pre code");
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      button.textContent = "已复制";
+    } catch {
+      button.textContent = "复制失败";
+    }
+    clearTimeout(button.copyTimer);
+    button.copyTimer = setTimeout(() => { button.textContent = "复制"; }, 1800);
+  });
   let current;
 
   return {
@@ -71,7 +85,12 @@ export function mountReader(root, { windowId }) {
       const key = post?.slug ?? requestedSlug ?? "";
       if (key === current) return;
       current = key;
-      if (post) scroll.innerHTML = articleMarkup(post, windowId);
+      if (post) {
+        scroll.innerHTML = articleMarkup(post, windowId, siteBase.href);
+        if (navigator.clipboard?.writeText) {
+          for (const button of scroll.querySelectorAll(".post-code-copy")) button.hidden = false;
+        }
+      }
       else {
         scroll.innerHTML = `<p class="reader-empty">${requestedSlug ? "找不到文章" : "暂无文章"}</p>`;
       }

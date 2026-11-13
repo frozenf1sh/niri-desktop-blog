@@ -20,6 +20,9 @@ const hasWindowTransitions = typeof document.startViewTransition === "function";
 const activeLabel = $("#active-app");
 const desktop = $(".desktop");
 const track = $("#workspace-track");
+const wallpaper = $(".wallpaper");
+track.style.transition = "none";
+wallpaper.style.transition = "none";
 const audio = $("#player-audio");
 const musicBar = $("#music-bar");
 const musicPanel = $("#music-panel");
@@ -625,6 +628,11 @@ function goToWorkspace(index) {
   navigate({ workspace: space.id, slug: space.id === "articles" ? lastArticleView.slug : undefined });
 }
 displayRoute(initialRoute, { revealArticle: Boolean(initialRoute.slug) });
+// Commit the initial position before enabling transitions for later navigation.
+track.getBoundingClientRect();
+wallpaper.getBoundingClientRect();
+track.style.removeProperty("transition");
+wallpaper.style.removeProperty("transition");
 $("#static-page")?.remove();
 document.body.classList.remove("has-static-page");
 

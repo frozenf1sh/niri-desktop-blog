@@ -16,10 +16,11 @@ export function postMeta(post) {
   }`;
 }
 
-export function articleMarkup(post, windowId) {
+export function articleMarkup(post, windowId, siteRoot = "./") {
+  const content = post.html.replaceAll("__POST_SITE_ROOT__", escapeHtml(siteRoot));
   const html = windowId
-    ? post.html.replace(/(id="|href="#)(post-[a-z0-9-]+)"/g, `$1${windowId}-$2"`)
-    : post.html;
+    ? content.replace(/(id="|href="#)(post-[a-z0-9-]+)"/g, `$1${windowId}-$2"`)
+    : content;
   return `<article class="post">
     <header class="post-header">
       <div class="post-meta">${postMeta(post)}</div>
