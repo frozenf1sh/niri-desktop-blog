@@ -78,6 +78,7 @@
       <time id="clock-time"></time><span class="clock-dot" aria-hidden="true"></span><span id="clock-date"></span>
     </button>
     <div class="bar-right">
+      <span class="music-lyric" id="music-lyric" aria-hidden="true" hidden><span class="music-lyric-text"></span></span>
       <div class="music-bar" id="music-bar" role="group" aria-label="音乐播放控件">
         <button class="bar-button music-transport-button" type="button" data-music-step="-1" aria-label="上一首" title="上一首">
           <svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg>
@@ -109,7 +110,7 @@
   <section class="popover launcher" id="launcher" aria-label="应用程序" inert></section>
   <section class="popover music-panel" id="music-panel" aria-label="音乐播放器" inert>
     <div class="music-current">
-      <span class="music-art" aria-hidden="true"><svg class="icon"><use href="#i-music"/></svg></span>
+      <span class="music-art" aria-hidden="true"><svg class="icon"><use href="#i-music"/></svg><img id="music-cover" alt="" hidden></span>
       <h2 id="music-title"></h2>
     </div>
     <div class="music-progress">

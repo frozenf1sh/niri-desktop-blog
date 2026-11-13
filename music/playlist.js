@@ -44,6 +44,7 @@ export function createPlaylist(tracks, initialMode, random = Math.random) {
   }
 
   return {
+    get tracks() { return [...tracks]; },
     get current() { return current; },
     get mode() { return mode; },
     setMode(value) {

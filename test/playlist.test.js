@@ -33,3 +33,13 @@ test("shuffle visits all other tracks before refilling and preserves previous/ne
   assert.equal(playlist.select("missing"), null);
   assert.equal(playlist.current, next);
 });
+
+
+test("exposes only this queue without allowing callers to change it", () => {
+  const playlist = createPlaylist(tracks.slice(0, 2), "shuffle");
+  const visible = playlist.tracks;
+  assert.deepEqual(visible.map((track) => track.id), ["a", "b"]);
+  visible.push(tracks[2]);
+  assert.equal(playlist.select("c"), null);
+  assert.equal(playlist.tracks.length, 2);
+});

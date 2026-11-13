@@ -138,4 +138,22 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-  egress: []
+  # DNS and public HTTPS are needed to resolve and reach the music API.
+  # Kubernetes NetworkPolicy cannot restrict egress by DNS name.
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 169.254.0.0/16]
+      ports:
+        - { protocol: TCP, port: 443 }

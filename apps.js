@@ -18,8 +18,8 @@ const noteFile = { name: "便笺.txt", id: "notes" };
 const wallpaperUrl = new URL("./assets/dusk.webp", import.meta.url).href;
 
 function mountFiles(root, { openApp, player }) {
-  const folderButton = ({ id, name, color }) =>
-    `<button class="file-item" type="button" data-go="${id}" style="--folder-color:${color}">${icon("folder-fill")}<span>${name}</span></button>`;
+  const folderButton = ({ id, name, color }, asFile = false) =>
+    `<button class="file-item${asFile ? " recent-item" : ""}" type="button" data-go="${id}" style="--folder-color:${color}">${asFile ? `<span class="file-thumb">${icon("folder-fill")}</span>` : icon("folder-fill")}<span>${name}</span></button>`;
   const fileButton = ({ id, name }) => `<button class="file-item recent-item" type="button" data-file="${id}" title="${name}">
     ${id === "wallpaper" ? `<img class="file-thumb" src="${wallpaperUrl}" alt="">` : `<span class="file-thumb">${icon("file")}</span>`}
     <span>${name}</span></button>`;
@@ -55,12 +55,12 @@ function mountFiles(root, { openApp, player }) {
 
   function render() {
     const current = history[cursor];
-    const location = locations.find(({ id }) => id === current);
+    const location = locations.find(({ id }) => id === current) ?? (current === "music-siren" ? { name: "塞壬唱片" } : null);
     const files = current === "pictures" ? [wallpaper] : current === "docs" ? [noteFile] : [];
     let count = files.length;
 
     path.innerHTML = `${icon("home")}<span>主文件夹</span>${
-      current === "home" ? "" : `${icon("chevron-right")}<span>${location?.name ?? wallpaper.name}</span>`
+      current === "home" ? "" : `${current === "music-siren" ? `${icon("chevron-right")}<span>音乐</span>` : ""}${icon("chevron-right")}<span>${location?.name ?? wallpaper.name}</span>`
     }`;
     path.title = location?.name ?? wallpaper.name;
     for (const button of sidebar) {
@@ -79,8 +79,14 @@ function mountFiles(root, { openApp, player }) {
       count = posts.length;
       view.innerHTML = `<div class="recent-grid">${posts.map(postLink).join("")}</div>`;
     } else if (current === "music") {
-      count = player.tracks.length;
-      view.innerHTML = `<div class="recent-grid">${player.tracks.map(musicButton).join("")}</div>`;
+      const local = player.tracks.filter((track) => !track.folder);
+      count = local.length + 1;
+      view.innerHTML = `<div class="recent-grid">${folderButton({ id: "music-siren", name: "塞壬唱片", color: "#dbafd7" }, true)}${local.map(musicButton).join("")}</div>`;
+      markTrack(player.current);
+    } else if (current === "music-siren") {
+      const songs = player.tracks.filter((track) => track.folder === "塞壬唱片");
+      count = songs.length;
+      view.innerHTML = `<div class="recent-grid">${songs.map(musicButton).join("")}</div>`;
       markTrack(player.current);
     } else if (current === "wallpaper") {
       count = 1;

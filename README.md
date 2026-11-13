@@ -37,7 +37,7 @@ docker run --rm -p 127.0.0.1:8080:8080 niri-desktop-blog
 
 首页的文件窗口列出最近文章。点击文章会打开文章工作区，浏览器的前进和后退会恢复对应的窗口、列表和滚动位置。关于工作区从 `profile.js` 和 `public/interests.json` 读取资料。便笺和日历可以从启动器打开。
 
-阅读器右侧显示章节目录和当前阅读位置。窗口宽度不足时，目录收成一列短横线。鼠标划过或手指按住横线可查看附近的章节标题，点击标题或横线即可跳转，也可以按住横线滑动后松手选中章节。
+阅读器右侧显示章节目录和当前阅读位置。目录以一列短横线显示。鼠标划过或手指按住横线可查看附近的章节标题，点击标题或横线即可跳转，也可以按住横线滑动后松手选中章节。
 
 新文章放在 `content/posts/`。文件名用英文小写和连字符，它会成为文章地址的一部分。文件开头的 YAML front matter 填写 `title`、`date`（`YYYY-MM-DD`）、`description` 和可选的 `tags`。构建后，`dist/articles/<文件名>/index.html` 包含正文，文章链接可以直接打开和分享。
 
@@ -63,3 +63,5 @@ read browser-terminal
 壁纸保存在 `assets/dusk.webp`，使用内置 imagegen 生成。生成提示词：
 
 > Use case: stylized-concept. Asset: full-bleed desktop wallpaper for a dark graphite, rounded Linux desktop. Create an exquisite, quiet 16:9 landscape painting of a Japanese coastal headland at blue hour: expansive hazy lilac and warm dusty peach sky fading into cool slate-blue, a tiny pale moon upper left, layers of faraway island silhouettes and a still, softly reflective bay. A dark indigo coastal slope curves in from the bottom right; subtle reeds and rock details along the bottom edge. Hand-painted anime background art with subtle film grain and luminous atmospheric perspective. Keep the upper third airy, the center low in detail for windows placed over it, and the coastline beautiful and discernible along the bottom and sides. Mid-to-low contrast, softened sunset colors, restrained highlights, visually clear at wallpaper size. Full edge-to-edge landscape, no borders, no people, no lettering, no icons, no UI, no watermark.
+
+音乐资源通过 `music/library.js` 的类型注册表交给适配器解析。`assets/music/塞壬唱片/` 中的 JSON 保存歌曲 ID，播放时通过同源 `/music-api/` 获取临时音频地址；专辑信息与歌词在浏览器缓存七天，音频和封面由浏览器按服务端缓存策略管理。开发与预览使用 Vite 代理，容器使用 Nginx 代理。默认随机选择塞壬唱片文件夹中的歌曲并尝试播放；浏览器阻止自动播放时，点击播放按钮即可。部署需要允许容器访问 DNS 和官方 HTTPS 接口，并确认所用音乐及素材的授权。
