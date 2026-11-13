@@ -56,6 +56,9 @@
     <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></symbol>
     <symbol id="i-prev" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="5" y="5" width="2" height="14" rx="1"/><path d="m18 5-9 6.2a1 1 0 0 0 0 1.6L18 19a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 18 5"/></symbol>
     <symbol id="i-next" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="17" y="5" width="2" height="14" rx="1"/><path d="m6 5 9 6.2a1 1 0 0 1 0 1.6L6 19a1 1 0 0 1-1.6-.8V5.8A1 1 0 0 1 6 5"/></symbol>
+    <symbol id="i-sequence" viewBox="0 0 24 24"><path d="M11 5h9m-9 7h9m-9 7h9M4 5l2-1v6m-2 0h4m-4 5c0-2 4-2 4 0 0 1.5-4 2.5-4 5h4"/></symbol>
+    <symbol id="i-repeat-one" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4m4-4H7a4 4 0 0 0-4 4v1m4 11-4-4 4-4m-4 4h14a4 4 0 0 0 4-4v-1m-10-2 1-1v4"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="m18 3 3 3-3 3m0 6 3 3-3 3M3 6h2c3 0 4 2 7 6s4 6 7 6h2M3 18h2c3 0 4-2 7-6s4-6 7-6h2"/></symbol>
   </svg>
 
   <div class="wallpaper" aria-hidden="true"></div>
@@ -75,6 +78,20 @@
       <time id="clock-time"></time><span class="clock-dot" aria-hidden="true"></span><span id="clock-date"></span>
     </button>
     <div class="bar-right">
+      <div class="music-bar" id="music-bar" role="group" aria-label="音乐播放控件">
+        <button class="bar-button music-transport-button" type="button" data-music-step="-1" aria-label="上一首" title="上一首">
+          <svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg>
+        </button>
+        <button class="bar-button music-transport-button" type="button" data-music-play aria-label="播放音乐" title="播放音乐">
+          <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>
+        </button>
+        <button class="bar-button music-transport-button" type="button" data-music-step="1" aria-label="下一首" title="下一首">
+          <svg class="icon" aria-hidden="true"><use href="#i-next"/></svg>
+        </button>
+        <button class="bar-button music-button" id="music-button" type="button" aria-label="音乐" aria-controls="music-panel" aria-expanded="false">
+          <span class="music-title-viewport" aria-hidden="true"><span class="music-bar-title"></span></span>
+        </button>
+      </div>
       <button class="bar-button status-button" id="status-button" aria-label="控制中心" aria-controls="control-center" aria-expanded="false" title="控制中心">
         <svg class="icon dnd-status" id="status-dnd" aria-hidden="true" hidden><use href="#i-bell-off"/></svg>
         <svg class="icon" id="status-wifi" aria-hidden="true"><use href="#i-wifi"/></svg>
@@ -90,6 +107,36 @@
   </main>
 
   <section class="popover launcher" id="launcher" aria-label="应用程序" inert></section>
+  <section class="popover music-panel" id="music-panel" aria-label="音乐播放器" inert>
+    <div class="music-current">
+      <span class="music-art" aria-hidden="true"><svg class="icon"><use href="#i-music"/></svg></span>
+      <h2 id="music-title"></h2>
+    </div>
+    <div class="music-progress">
+      <span id="music-elapsed">0:00</span>
+      <input type="range" id="music-progress" min="0" max="100" step="0.1" value="0" aria-label="播放进度">
+      <span id="music-duration">0:00</span>
+    </div>
+    <div class="music-actions">
+      <div class="music-transport">
+        <button class="icon-button" type="button" data-music-step="-1" aria-label="上一首" title="上一首">
+          <svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg>
+        </button>
+        <button class="icon-button music-play" type="button" data-music-play aria-label="播放音乐" title="播放音乐">
+          <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>
+        </button>
+        <button class="icon-button" type="button" data-music-step="1" aria-label="下一首" title="下一首">
+          <svg class="icon" aria-hidden="true"><use href="#i-next"/></svg>
+        </button>
+      </div>
+      <button class="icon-button music-mode" id="music-mode" type="button" aria-label="播放模式：顺序播放" title="顺序播放">
+        <svg class="icon" aria-hidden="true"><use href="#i-sequence"/></svg>
+      </button>
+    </div>
+    <p id="music-error" role="status" hidden>无法播放此音频</p>
+    <ul id="music-list" class="music-list" aria-label="播放列表"></ul>
+  </section>
+  <audio id="player-audio" preload="none"></audio>
   <section class="popover control-center" id="control-center" aria-labelledby="control-title" inert>
     <div class="control-header">
       <h2 id="control-title">控制中心</h2>

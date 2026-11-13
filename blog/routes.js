@@ -1,5 +1,5 @@
 export const workspaces = [
-  { id: "home", label: "首页", path: "", apps: ["files", "terminal", "music"], utilities: ["notes", "calendar"] },
+  { id: "home", label: "首页", path: "", apps: ["files", "terminal"] },
   { id: "articles", label: "文章", path: "articles/", apps: ["archive", "reader"] },
   { id: "about", label: "关于", path: "about/", apps: ["profile", "projects"] },
 ];

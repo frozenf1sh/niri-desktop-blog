@@ -2,7 +2,7 @@
   height: 100%;
   padding: 19px 21px;
   overflow: auto;
-  scrollbar-width: thin;
+
   font: 12px/1.8 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-variant-ligatures: none;
   color: #e6e1ee;
@@ -98,7 +98,7 @@
   border: 1px solid #ffffff14;
   border-radius: 8px;
   background: #211d2c;
-  scrollbar-width: thin;
+
 }
 
 .terminal-completions[hidden] { display: none; }

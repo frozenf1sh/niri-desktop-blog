@@ -16,13 +16,16 @@ export function postMeta(post) {
   }`;
 }
 
-export function articleMarkup(post) {
+export function articleMarkup(post, windowId) {
+  const html = windowId
+    ? post.html.replace(/(id="|href="#)(post-[a-z0-9-]+)"/g, `$1${windowId}-$2"`)
+    : post.html;
   return `<article class="post">
     <header class="post-header">
       <div class="post-meta">${postMeta(post)}</div>
       <h1 tabindex="-1">${escapeHtml(post.title)}</h1>
     </header>
-    <div class="post-body">${post.html}</div>
+    <div class="post-body">${html}</div>
   </article>`;
 }
 

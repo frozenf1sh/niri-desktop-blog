@@ -8,7 +8,7 @@ function start({ windows, primary, update, canAnimate }) {
   }
   const root = document.documentElement;
   root.dataset.windowTransition = "";
-  const hadPrimary = primary && !primary.hidden;
+  const before = primary && !primary.hidden ? primary.getBoundingClientRect() : null;
   for (const { el, app } of windows) {
     el.style.viewTransitionName = el === primary ? "window-active" : `window-${app.id}`;
   }
@@ -18,7 +18,9 @@ function start({ windows, primary, update, canAnimate }) {
     if (updated) return;
     updated = true;
     update();
-    root.toggleAttribute("data-window-resize", Boolean(hadPrimary && !primary.hidden));
+    const after = before && !primary.hidden ? primary.getBoundingClientRect() : null;
+    const resized = after && (Math.abs(before.width - after.width) > 1 || Math.abs(before.height - after.height) > 1);
+    root.toggleAttribute("data-window-resize", Boolean(resized));
   };
   const transition = document.startViewTransition(apply);
   active = { transition, apply };

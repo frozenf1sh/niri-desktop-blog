@@ -1,24 +1,34 @@
-.workspace[data-workspace="articles"] {
-  --tile-columns: minmax(205px, .34fr) minmax(0, 1fr);
-}
-
-.workspace[data-workspace="about"] {
-  --tile-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-}
-
 @media (min-width: 801px) and (min-height: 561px) {
+  .workspace[data-workspace="home"] .tiles[data-count="2"]:has(> [data-single-app="files"]):has(> [data-single-app="terminal"]) > :first-child {
+    --column-default: calc((100% - var(--tile-gap)) * .58);
+  }
+  .workspace[data-workspace="home"] .tiles[data-count="2"]:has(> [data-single-app="files"]):has(> [data-single-app="terminal"]) > :nth-child(2) {
+    --column-default: calc((100% - var(--tile-gap)) * .42);
+  }
+
   .workspace[data-workspace="articles"] .tiles:not([data-maximized]) {
     height: min(82%, 720px);
   }
 
+  .workspace[data-workspace="about"] .tiles:not([data-maximized]) {
+    --tile-width: min(86vw, 1000px);
+  }
   .workspace[data-workspace="about"] .tiles[data-count="2"]:not([data-maximized]) {
-    width: min(86%, 1000px);
     height: min(56%, 370px);
     min-height: 290px;
   }
+  .workspace[data-workspace="articles"] .tiles[data-count="2"]:has(> [data-single-app="archive"]):has(> [data-single-app="reader"]) {
+    --archive-width: max(205px, calc((100% - var(--tile-gap)) * .25));
+  }
+  .workspace[data-workspace="articles"] .tiles[data-count="2"]:has(> [data-single-app="archive"]):has(> [data-single-app="reader"]) > :first-child {
+    --column-default: var(--archive-width);
+  }
+  .workspace[data-workspace="articles"] .tiles[data-count="2"]:has(> [data-single-app="archive"]):has(> [data-single-app="reader"]) > :nth-child(2) {
+    --column-default: calc(100% - var(--archive-width) - var(--tile-gap));
+  }
 
-  .tiles[data-count="1"]:not([data-maximized]):has(> .window[data-app="reader"]:not([hidden])) {
-    width: min(920px, 86%);
+  .tiles[data-count="1"] > [data-single-app="reader"] {
+    --column-default: min(100%, 920px);
   }
 }
 
@@ -81,7 +91,7 @@
   flex: 1;
   overflow: auto;
   padding: 11px 9px;
-  scrollbar-width: thin;
+
 }
 
 .archive-year + .archive-year {
@@ -145,55 +155,120 @@
 }
 
 .reader-body {
-  overscroll-behavior: contain;
+  --outline-width: 34px;
+  --outline-inset: 9px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
 }
 
-.outline-toggle[aria-expanded="true"] {
-  color: var(--accent);
-  background: #ab84ff22;
+.reader-body:has(.reader-outline:not([hidden])) {
+  grid-template-columns: minmax(0, 1fr) var(--outline-width);
+}
+
+.reader-scroll {
+  grid-area: 1 / 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+
 }
 
 .reader-outline {
-  position: absolute;
+  grid-area: 1 / 1 / 2 / -1;
+  align-self: center;
   z-index: 2;
-  top: 52px;
-  right: 10px;
-  display: grid;
-  gap: 3px;
-  width: min(245px, calc(100% - 20px));
-  max-height: calc(100% - 62px);
+  min-width: 0;
+  max-height: calc(100% - 20px);
+  margin-right: var(--outline-inset);
   overflow: auto;
-  padding: 7px;
-  border: 1px solid #62576f;
-  border-radius: 11px;
-  background: #262131;
-  box-shadow: 0 10px 26px #0c091780;
-  scrollbar-width: thin;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-5px);
-  transition: opacity 170ms var(--ease), transform 210ms var(--spring), visibility 210ms;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  pointer-events: none;
 }
 
-.reader-outline.is-open {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
+.reader-outline ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reader-outline > ol {
+  width: calc(var(--outline-width) - var(--outline-inset));
+  margin-left: auto;
+  pointer-events: auto;
 }
 
 .reader-outline button {
-  padding: 7px 8px 7px calc(8px + 12px * var(--outline-indent));
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 28px;
   border-radius: 6px;
   color: var(--muted);
   text-align: left;
-  overflow-wrap: anywhere;
-  font-size: 12px;
 }
 
-.reader-outline button:hover,
+.reader-outline button:focus-visible {
+  outline-offset: -2px;
+}
+
+.reader-outline-tick {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.reader-outline-tick::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  top: calc(50% - 1px);
+  width: max(7px, calc(14px - 3px * var(--outline-depth)));
+  height: 2px;
+  border-radius: 2px;
+  background: #625a70;
+  transition: background 160ms var(--ease), width 160ms var(--ease);
+}
+
+.reader-outline [data-passed] .reader-outline-tick::after { background: #9181aa; }
+.reader-outline [aria-current="location"] .reader-outline-tick::after {
+  width: max(10px, calc(18px - 3px * var(--outline-depth)));
+  background: var(--accent);
+}
+
+.reader-outline-title {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 3px);
+  width: max-content;
+  max-width: min(270px, calc((100cqi - 48px) / 1.25));
+  overflow: hidden;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #262131f5;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: var(--outline-opacity, 0);
+  transform: translateY(-50%) scale(var(--outline-scale, .86));
+  transform-origin: right center;
+  transition: opacity 115ms var(--ease), transform 145ms var(--ease);
+}
+
+.reader-outline button:focus-visible .reader-outline-title {
+  --outline-opacity: 1;
+  --outline-scale: 1.25;
+}
+
 .reader-outline button[aria-current="location"] {
   color: var(--accent);
-  background: #ab84ff22;
 }
 
 .post {
@@ -376,22 +451,4 @@
   margin-inline-start: 8px;
   color: var(--muted);
   font-size: 12px;
-}
-
-@media (max-width: 800px), (max-height: 560px) {
-  .tiles:not([data-maximized]) .window[data-app="archive"] {
-    height: 255px;
-  }
-
-  .tiles:not([data-maximized]) .window[data-app="reader"] {
-    height: max(360px, calc(100dvh - var(--desktop-top) - 28px));
-  }
-
-  .tiles:not([data-maximized]) .window[data-app="profile"] {
-    min-height: 270px;
-  }
-
-  .reader-body {
-    overscroll-behavior: auto;
-  }
 }

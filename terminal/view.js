@@ -4,7 +4,7 @@ import { banner, profile, welcomeCommands } from "./profile.js";
 import { createShell } from "./shell.js";
 import "./terminal.css";
 
-export function mountTerminal(root, { directories, baseUrl, posts, postHref, openArticle }) {
+export function mountTerminal(root, { directories, baseUrl, posts, postHref, openArticle, windowId }) {
   root.innerHTML = `<div class="terminal-shell" data-scroll>
     <div class="terminal-history" role="log"></div>
     <form class="terminal-form">
@@ -12,11 +12,11 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
       <div class="terminal-input-wrap">
         <div class="terminal-input-ink" aria-hidden="true"></div>
         <input class="terminal-input" role="combobox" aria-label="命令" aria-autocomplete="list"
-          aria-expanded="false" aria-controls="terminal-completions" placeholder="▌"
+          aria-expanded="false" aria-controls="${windowId}-completions" placeholder="▌"
           autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
     </form>
-    <div class="terminal-completions" id="terminal-completions" role="listbox" aria-label="补全候选" hidden></div>
+    <div class="terminal-completions" id="${windowId}-completions" role="listbox" aria-label="补全候选" hidden></div>
   </div>`;
   const shell = root.firstElementChild;
   const history = root.querySelector(".terminal-history");
@@ -160,7 +160,7 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
       const option = document.createElement("button");
       option.type = "button";
       option.tabIndex = -1;
-      option.id = `terminal-option-${index}`;
+      option.id = `${windowId}-option-${index}`;
       option.setAttribute("role", "option");
       option.textContent = candidate.label ?? candidate.value;
       option.addEventListener("pointerdown", (event) => event.preventDefault());
@@ -189,20 +189,20 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   });
 
   input.addEventListener("keydown", (event) => {
-    if (composing || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.key === "Tab" && !event.shiftKey && input.value.trim()) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      if (composing || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       if (completing) {
-        event.preventDefault();
-        selectCandidate(selected + 1);
+        selectCandidate(selected + (event.shiftKey ? -1 : 1));
         return;
       }
+      if (event.shiftKey || !input.value.trim()) return;
       const completion = terminal.complete(input.value, input.selectionStart);
-      if (!completion.candidates.length) return;
-      event.preventDefault();
       if (completion.candidates.length === 1) accept(completion.candidates[0], completion);
-      else showSuggestions(completion);
+      else if (completion.candidates.length > 1) showSuggestions(completion);
       return;
     }
+    if (composing || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
     if (completing) {
       if (event.key === "Escape") {
         event.preventDefault();
