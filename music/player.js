@@ -18,6 +18,12 @@ function formatTime(seconds) {
 }
 
 export function mountPlayer(audio, bar, panel) {
+  const pauseKey = "niri-desktop:music-user-paused";
+  let userPaused = false;
+  try { userPaused = sessionStorage.getItem(pauseKey) === "true"; } catch { /* Storage is optional. */ }
+  function rememberPause(paused) {
+    try { sessionStorage.setItem(pauseKey, String(paused)); } catch { /* Storage is optional. */ }
+  }
   const defaultTracks = tracks.filter((track) => track.folder === "塞壬唱片");
   let playlist = createPlaylist(defaultTracks.length ? defaultTracks : tracks, readSetting("music-mode", "shuffle"));
   if (playlist.current && playlist.mode === "shuffle") {
@@ -46,6 +52,7 @@ export function mountPlayer(audio, bar, panel) {
   let lyricAnimation;
   let resolveRequest = 0;
   let loadedId = null;
+  let wantsPlayback = !userPaused;
   let lyrics = [];
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -109,7 +116,7 @@ export function mountPlayer(audio, bar, panel) {
   }
 
   function updatePlay() {
-    const playing = !audio.paused && !audio.ended;
+    const playing = (!audio.paused && !audio.ended) || (loadedId !== playlist.current?.id && wantsPlayback);
     const label = playing ? "暂停音乐" : "播放音乐";
     for (const button of playButtons) {
       button.querySelector("use").setAttribute("href", playing ? "#i-pause" : "#i-play");
@@ -151,6 +158,7 @@ export function mountPlayer(audio, bar, panel) {
 
   function play(silent = false) {
     if (!playlist.current) return;
+    wantsPlayback = true;
     if (loadedId !== playlist.current.id) {
       load(playlist.current, true, silent);
       return;
@@ -159,6 +167,7 @@ export function mountPlayer(audio, bar, panel) {
     error.hidden = true;
     audio.play().catch((failure) => {
       if (request !== playRequest || failure.name === "AbortError") return;
+      wantsPlayback = false;
       if (!silent || failure.name !== "NotAllowedError") error.hidden = false;
       updatePlay();
     });
@@ -166,6 +175,7 @@ export function mountPlayer(audio, bar, panel) {
 
   async function load(track, autoplay, silent = false) {
     if (!track) return;
+    wantsPlayback = autoplay;
     const request = ++resolveRequest;
     playRequest++;
     audio.pause();
@@ -189,15 +199,20 @@ export function mountPlayer(audio, bar, panel) {
       }
       audio.src = resolved.source;
       loadedId = track.id;
-      if (autoplay) play(silent);
+      if (wantsPlayback) play(silent);
     } catch {
-      if (request === resolveRequest) error.hidden = false;
+      if (request === resolveRequest) {
+        wantsPlayback = false;
+        error.hidden = false;
+        updatePlay();
+      }
     }
   }
 
   function select(id) {
     const track = tracks.find((item) => item.id === id);
     if (!track) return;
+    rememberPause(false);
     if (!playlist.select(id)) {
       playlist = createPlaylist(tracks.filter((item) => item.folder === track.folder), playlist.mode);
       playlist.select(id);
@@ -207,7 +222,7 @@ export function mountPlayer(audio, bar, panel) {
   }
 
   function advance(direction, ended = false) {
-    const autoplay = ended || !audio.paused;
+    const autoplay = ended || !audio.paused || (loadedId !== playlist.current?.id && wantsPlayback);
     const track = playlist.advance(direction, ended);
     if (track) load(track, autoplay);
     else updatePlay();
@@ -225,10 +240,16 @@ export function mountPlayer(audio, bar, panel) {
   for (const button of playButtons) {
     button.disabled = !tracks.length;
     button.addEventListener("click", () => {
-      if (audio.paused || audio.ended) play();
+      if ((audio.paused || audio.ended) && !(loadedId !== playlist.current?.id && wantsPlayback)) {
+        rememberPause(false);
+        play();
+      }
       else {
+        wantsPlayback = false;
+        rememberPause(true);
         playRequest++;
         audio.pause();
+        updatePlay();
       }
     });
   }
@@ -261,7 +282,7 @@ export function mountPlayer(audio, bar, panel) {
   renderPlaylist();
   updateMode();
   cover.addEventListener("error", () => { cover.hidden = true; });
-  if (playlist.current) load(playlist.current, true, true);
+  if (playlist.current) load(playlist.current, !userPaused, true);
   else updateTrack();
 
   return {
