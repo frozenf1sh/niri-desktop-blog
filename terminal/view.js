@@ -1,10 +1,11 @@
+import { session, validUsername } from "../auth/session.js";
 import { createFileSystem } from "./files.js";
 import { appendCommand, appendJson } from "./highlight.js";
 import { banner, profile, welcomeCommands } from "./profile.js";
 import { createShell } from "./shell.js";
 import "./terminal.css";
 
-export function mountTerminal(root, { directories, baseUrl, posts, postHref, openArticle, windowId }) {
+export function mountTerminal(root, { directories, baseUrl, posts, postHref, openArticle, windowId, closeWindow }) {
   root.innerHTML = `<div class="terminal-shell" data-scroll>
     <div class="terminal-history" role="log"></div>
     <form class="terminal-form">
@@ -31,20 +32,33 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
     directories,
     entries: Object.fromEntries(posts.map(({ slug, source }) => [`文章/${slug}.md`, { text: source }])),
   });
-  const terminal = createShell({ profile, files, posts });
+  const terminal = createShell({ profile, files, posts, currentUser: () => session.user?.username ?? "guest" }, [
+    { name: "su", usage: "su <用户名>", description: "切换账号", run: (args) => {
+      if (args.length !== 1 || !validUsername(args[0])) return { text: "usage: su <用户名>（字母、数字、_ 或 -，不能为 guest）", kind: "error" };
+      return { passwordFor: args[0] };
+    } },
+    { name: "exit", usage: "exit", description: "退出账号或关闭终端", run: (args) => {
+      if (args.length) return "usage: exit";
+      const username = session.user?.username;
+      if (!username) return { closeWindow: true };
+      session.logout();
+      return `已退出 ${username}。`;
+    } },
+  ]);
   const commands = [...welcomeCommands];
   let cursor = commands.length;
   let queue = Promise.resolve();
   let completing = null;
   let selected = 0;
   let composing = false;
+  let passwordFor = null;
 
   function promptText() {
     const cwd = terminal.cwd;
     const shown = cwd === profile.home || cwd.startsWith(profile.home + "/")
       ? "~" + cwd.slice(profile.home.length)
       : cwd;
-    return `${profile.username}@${profile.hostname}:${shown}$ `;
+    return `${session.user?.username ?? "guest"}@${profile.hostname}:${shown}$ `;
   }
 
   function appendRow(row) {
@@ -94,13 +108,35 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
     queue = queue.then(async () => {
       printCommand(line);
       const result = await terminal.execute(line);
+      if (result.passwordFor) {
+        passwordFor = result.passwordFor;
+        input.type = "password";
+        input.autocomplete = "current-password";
+        input.setAttribute("aria-label", "密码");
+        form.classList.add("is-password");
+      }
+      if (result.closeWindow) { closeWindow(); return; }
       if (result.clear) history.replaceChildren();
       if (result.text !== undefined) print(result.text, result.kind);
       if (result.posts) printPosts(result.posts);
-      formPrompt.textContent = promptText();
+      formPrompt.textContent = passwordFor ? "密码：" : promptText();
       if (follow || document.activeElement === input) revealPrompt();
       if (result.openPost) openArticle(result.openPost, { origin: input, keyboard: true });
     });
+  }
+
+  session.subscribe(() => {
+    if (!passwordFor) formPrompt.textContent = promptText();
+  });
+  function endPassword() {
+    passwordFor = null;
+    input.value = "";
+    input.type = "text";
+    input.autocomplete = "off";
+    input.setAttribute("aria-label", "命令");
+    form.classList.remove("is-password");
+    formPrompt.textContent = promptText();
+    paintInput();
   }
 
   const art = document.createElement("pre");
@@ -177,6 +213,15 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (composing) return;
+    if (passwordFor) {
+      if (!input.value) return;
+      const username = passwordFor;
+      endPassword();
+      session.login(username);
+      print(`已切换到 ${username}。`);
+      revealPrompt();
+      return;
+    }
     const value = input.value.trim();
     input.value = "";
     hideSuggestions();
@@ -189,6 +234,10 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   });
 
   input.addEventListener("keydown", (event) => {
+    if (passwordFor) {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); endPassword(); print("已取消。"); }
+      return;
+    }
     if (event.key === "Tab") {
       event.preventDefault();
       if (composing || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -224,7 +273,7 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   });
   input.addEventListener("input", () => {
     hideSuggestions();
-    paintInput();
+    if (!passwordFor) paintInput();
   });
   input.addEventListener("compositionstart", () => {
     composing = true;

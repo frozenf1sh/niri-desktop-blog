@@ -143,6 +143,11 @@
       <h2 id="control-title">控制中心</h2>
       <span class="control-battery"><svg class="icon" aria-hidden="true"><use href="#i-battery"/></svg>86%</span>
     </div>
+    <div class="account-card">
+      <div class="account-avatar" id="account-avatar" aria-hidden="true">G</div>
+      <div class="account-details"><strong id="account-name">访客</strong><span id="account-status">未登录</span></div>
+      <button class="account-action" id="account-action" type="button">登录</button>
+    </div>
     <div class="quick-settings">
       <button class="quick-tile" data-toggle="wifi" aria-pressed="true">
         <span class="quick-icon"><svg class="icon" aria-hidden="true"><use href="#i-wifi"/></svg></span><span>无线网络</span>
@@ -170,6 +175,21 @@
       </div>
     </div>
   </section>
+  <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+    <div class="auth-top"><h2 id="auth-title">登录</h2>
+      <button class="auth-close" type="button" aria-label="关闭">×</button></div>
+    <form id="auth-form">
+      <label>用户名<input name="username" autocomplete="username" required maxlength="32" pattern="[A-Za-z0-9_-]+" placeholder="输入用户名"></label>
+      <label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="输入密码"></label>
+      <div id="auth-register-fields" hidden>
+        <label>邮箱<input name="email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+        <label>邮箱验证码<span class="auth-code"><input name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="验证码"><button type="button" disabled>发送验证码</button></span></label>
+      </div>
+      <p class="auth-error" role="alert" hidden></p>
+      <button class="auth-submit" type="submit">登录</button>
+    </form>
+    <p class="auth-switch"><span>还没有账号？</span> <button type="button">创建账号</button></p>
+  </dialog>
   <!-- static-page -->
 </body>
 </html>

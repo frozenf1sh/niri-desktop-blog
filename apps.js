@@ -207,9 +207,9 @@ export const apps = [
   { id: "files", title: "文件", icon: "folder", color: "#d1b9ff", mount: mountFiles },
   {
     id: "terminal", title: "终端", icon: "terminal", color: "#a5decb",
-    mount: (root, { openArticle, windowId }) => mountTerminal(root, {
+    mount: (root, { openArticle, windowId, closeWindow }) => mountTerminal(root, {
       directories: locations.slice(1).map(({ name }) => name),
-      baseUrl: siteBase, posts, postHref, openArticle, windowId,
+      baseUrl: siteBase, posts, postHref, openArticle, windowId, closeWindow,
     }),
   },
   { id: "archive", title: "归档", icon: "folder", color: "#d1b9ff", mount: mountArchive },

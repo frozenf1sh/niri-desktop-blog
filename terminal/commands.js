@@ -97,7 +97,7 @@ export const builtInCommands = [
     complete: ({ args, prefix }, { files, session }) => args.length ? [] : files.completePath(prefix, session.cwd, true),
   },
   { name: "pwd", usage: "pwd", description: "显示当前虚拟目录", run: (_, { session }) => session.cwd },
-  { name: "whoami", usage: "whoami", description: "显示当前用户名", run: (_, { profile }) => profile.username },
+  { name: "whoami", usage: "whoami", description: "显示当前用户名", run: (_, { profile, currentUser }) => currentUser ? currentUser() : profile.username },
   { name: "date", usage: "date", description: "显示本地日期和时间", run: () => new Date().toLocaleString() },
   { name: "echo", usage: "echo [文字]", description: "输出输入的文字", run: (args) => args.join(" ") },
   { name: "clear", usage: "clear", description: "清空终端输出", run: () => ({ clear: true }) },

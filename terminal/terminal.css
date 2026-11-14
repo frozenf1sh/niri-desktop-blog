@@ -121,3 +121,7 @@
   .terminal-input { color: CanvasText; caret-color: CanvasText; }
   .terminal-input-ink { visibility: hidden; }
 }
+
+.terminal-form.is-password .terminal-input { color: inherit; }
+.terminal-form.is-password .terminal-input-ink { visibility: hidden; }
+.terminal-form.is-password .terminal-input::selection { color: inherit; }

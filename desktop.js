@@ -1,3 +1,4 @@
+import { mountAuth } from "./auth/view.js";
 import { apps } from "./apps.js";
 import { postBySlug, posts, siteBase } from "./blog/content.js";
 import { pageTitle } from "./blog/markup.js";
@@ -27,6 +28,7 @@ const audio = $("#player-audio");
 const musicBar = $("#music-bar");
 const musicPanel = $("#music-panel");
 const player = mountPlayer(audio, musicBar, musicPanel);
+mountAuth();
 const appById = new Map(apps.map((app) => [app.id, app]));
 const openWindows = new Map();
 const routedApps = new Set(["archive", "reader"]);
@@ -488,7 +490,7 @@ function mountWindow(app, space, open) {
     openWindows.set(app.id, record);
   }
   space.parked.append(el);
-  record.api = app.mount($(".window-body", el), { openApp, openArticle, player, windowId, actions: $(".window-actions", el) }) ?? {};
+  record.api = app.mount($(".window-body", el), { openApp, openArticle, player, windowId, closeWindow: () => closeWindow(record), actions: $(".window-actions", el) }) ?? {};
   record.api.show?.(lastArticleView.post, lastArticleView.slug);
   record.api.select?.(lastArticleView.post?.slug);
   el.addEventListener("pointerdown", () => focusWindow(record));
@@ -668,7 +670,7 @@ function focusColumn(direction) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.defaultPrevented || event.isComposing) return;
+  if (event.defaultPrevented || event.isComposing || $("#auth-dialog").open) return;
   if (event.key === "Escape") {
     if (openPanel) setPanel(null, true);
     else if (spaces[workspaceIndex].maximized) toggleMaximize(spaces[workspaceIndex].maximized);
