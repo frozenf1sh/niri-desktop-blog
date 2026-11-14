@@ -17,9 +17,17 @@ test("compiles Markdown, highlighting, containers and trusted HTML", () => {
   assert.match(post.html, /raw &#x3C;code>/);
   assert.deepEqual(post.headings.map(({ label }) => label), ["章节"]);
   assert.match(articleMarkup(post, "reader1", "../../"), /src="\.\.\/\.\.\/post-assets\/sample\/pic.png"/);
-  assert.match(articleMarkup(post, "reader1", "/blog/"), /id="reader1-post-sample-1"/);
+  assert.match(articleMarkup(post, "reader1", "/blog/"), /id="reader1-章节"/);
 });
 
 test("local images cannot escape the article asset directory", () => {
   assert.throws(() => compilePost("sample", front + "\n![x](../secret.png)"), /图片路径/);
+});
+
+
+test("heading anchors are readable and unique", () => {
+  const post = compilePost("sample", front + "\n## 章节 A\n\n## 章节 A\n\n## 章节 A-2\n\n## !!!\n");
+  assert.deepEqual(post.headings.map(({ id }) => id), ["章节-a", "章节-a-2", "章节-a-2-2", "section"]);
+  assert.match(articleMarkup(post), /id="章节-a"/);
+  assert.match(articleMarkup(post, "reader1"), /id="reader1-章节-a-2"/);
 });

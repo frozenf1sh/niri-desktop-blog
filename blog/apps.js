@@ -57,14 +57,25 @@ export function mountArchive(root) {
   };
 }
 
-export function mountReader(root, { windowId }) {
+export function mountReader(root, { windowId, navigateSection }) {
   root.classList.add("reader-body");
   const scroll = document.createElement("div");
   scroll.className = "reader-scroll";
   scroll.dataset.scroll = "";
   root.append(scroll);
-  const setHeadings = mountReaderOutline(scroll, windowId);
+  const { setHeadings, jumpTo } = mountReaderOutline(scroll, windowId, navigateSection);
   scroll.addEventListener("click", async (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    if (link && scroll.contains(link) && !event.defaultPrevented && event.button === 0
+        && !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+      let id;
+      try { id = decodeURIComponent(link.getAttribute("href").slice(1)); } catch { return; }
+      if (currentPost?.headings.some((heading) => heading.id === id)) {
+        event.preventDefault();
+        navigateSection(id);
+      }
+      return;
+    }
     const button = event.target.closest(".post-code-copy");
     if (!button || !scroll.contains(button)) return;
     const code = button.closest(".post-code").querySelector("pre code");
@@ -79,12 +90,15 @@ export function mountReader(root, { windowId }) {
     button.copyTimer = setTimeout(() => { button.textContent = "复制"; }, 1800);
   });
   let current;
+  let currentPost;
 
   return {
+    jumpTo,
     show(post, requestedSlug) {
       const key = post?.slug ?? requestedSlug ?? "";
       if (key === current) return;
       current = key;
+      currentPost = post;
       if (post) {
         scroll.innerHTML = articleMarkup(post, windowId, siteBase.href);
         if (navigator.clipboard?.writeText) {

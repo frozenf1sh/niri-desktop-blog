@@ -481,3 +481,5 @@
 .post-callout-warning { border-left-color: #e8bc71; background: #e8bc7110; }
 .post-callout-danger { border-left-color: #e58c98; background: #e58c9810; }
 .post-callout-tip { border-left-color: #85c7ab; background: #85c7ab10; }
+
+.post-body :is(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus { outline: none; }

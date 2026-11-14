@@ -16,16 +16,17 @@ export function connectNavigation({ base, capture, display }) {
 
     const route = readRoute(location.pathname, base.pathname) ?? { workspace: "home" };
     const snapshot = views.get(entry);
-    display(route, { snapshot, revealArticle: !snapshot && Boolean(route.slug) });
+    display(route, { snapshot, fragment: location.hash, revealArticle: !snapshot && Boolean(route.slug) });
   });
 
   return function navigate(route, options = {}) {
     const url = new URL(routePath(route), base);
+    if (options.fragment) url.hash = options.fragment;
     if (url.href !== location.href) {
       views.set(entry, capture(options.origin));
       entry = newEntry();
       history.pushState({ desktopEntry: entry }, "", url);
     }
-    display(route, options);
+    display(route, { ...options, fragment: url.hash });
   };
 }

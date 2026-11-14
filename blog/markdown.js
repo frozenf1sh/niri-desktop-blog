@@ -62,11 +62,15 @@ export function compilePost(slug, source) {
   const env = {};
   const tokens = markdown.parse(source.slice(frontMatter[0].length), env);
   const headings = [];
+  const usedIds = new Set();
   for (const [index, token] of tokens.entries()) {
     if (token.type !== "heading_open" || token.level !== 0) continue;
     const label = tokens[index + 1].children.map(({ content }) => content).join("").trim();
     if (!label) continue;
-    const id = `post-${slug}-${headings.length + 1}`;
+    const base = label.toLowerCase().trim().replace(/[^\p{L}\p{N}_\-\s]/gu, "").replace(/\s+/g, "-") || "section";
+    let id = base;
+    for (let suffix = 2; usedIds.has(id); suffix++) id = `${base}-${suffix}`;
+    usedIds.add(id);
     token.attrSet("id", id);
     headings.push({ id, label, level: Number(token.tag.slice(1)) });
   }

@@ -2,7 +2,7 @@ const previewRadius = 1.55;
 const tickSelector = ".reader-outline-tick";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export function mountReaderOutline(scroll, windowId) {
+export function mountReaderOutline(scroll, windowId, onNavigate) {
   const outline = document.createElement("nav");
   outline.className = "reader-outline";
   outline.setAttribute("aria-label", "文章目录");
@@ -18,11 +18,13 @@ export function mountReaderOutline(scroll, windowId) {
   let press = null;
   let previewed = [];
 
-  function jump(heading) {
+  function jump(heading, { animate = false, focus = false } = {}) {
     const top = scroll.scrollTop + heading.getBoundingClientRect().top - scroll.getBoundingClientRect().top - 16;
-    heading.tabIndex = -1;
-    heading.focus({ preventScroll: true });
-    scroll.scrollTo({ top, behavior: reduceMotion.matches ? "instant" : "smooth" });
+    if (focus) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
+    scroll.scrollTo({ top, behavior: animate && !reduceMotion.matches ? "smooth" : "instant" });
   }
 
   function scheduleProgress() {
@@ -114,7 +116,7 @@ export function mountReaderOutline(scroll, windowId) {
       section = sections[clamp(Math.round(cursor), 0, sections.length - 1)];
     }
     clearPreview();
-    if (section) jump(section.heading);
+    if (section) onNavigate(section.id);
   }
 
   outline.addEventListener("pointerover", followPointer);
@@ -140,14 +142,15 @@ export function mountReaderOutline(scroll, windowId) {
     schedulePreview();
   });
 
-  return function setHeadings(headings) {
+  function setHeadings(headings) {
     clearPreview();
     current = -1;
     sections = [];
     const list = document.createElement("ol");
     const parents = [];
     for (const { id, label, level } of headings) {
-      const heading = scroll.querySelector(`#${windowId}-${id}`);
+      const heading = document.getElementById(`${windowId}-${id}`);
+      if (heading && !scroll.contains(heading)) continue;
       if (!heading) continue;
       while (parents.at(-1)?.level >= level) parents.pop();
       const parent = parents.at(-1);
@@ -161,7 +164,7 @@ export function mountReaderOutline(scroll, windowId) {
       const button = document.createElement("button");
       button.type = "button";
       button.style.setProperty("--outline-depth", parents.length);
-      button.addEventListener("click", () => jump(heading));
+      button.addEventListener("click", () => onNavigate(id));
       const title = document.createElement("span");
       title.className = "reader-outline-title";
       title.textContent = label;
@@ -172,7 +175,7 @@ export function mountReaderOutline(scroll, windowId) {
       item.append(button);
       group.append(item);
       parents.push({ item, level });
-      sections.push({ heading, button });
+      sections.push({ id, heading, button });
     }
     outline.replaceChildren(list);
     outline.hidden = !sections.length;
@@ -181,5 +184,12 @@ export function mountReaderOutline(scroll, windowId) {
     observer.observe(scroll);
     if (scroll.firstElementChild) observer.observe(scroll.firstElementChild);
     scheduleProgress();
-  };
+  }
+  function jumpTo(id, options) {
+    const section = sections.find((item) => item.id === id);
+    if (!section) return false;
+    jump(section.heading, options);
+    return true;
+  }
+  return { setHeadings, jumpTo };
 }

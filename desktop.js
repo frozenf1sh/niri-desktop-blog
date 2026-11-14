@@ -490,7 +490,7 @@ function mountWindow(app, space, open) {
     openWindows.set(app.id, record);
   }
   space.parked.append(el);
-  record.api = app.mount($(".window-body", el), { openApp, openArticle, player, windowId, closeWindow: () => closeWindow(record), actions: $(".window-actions", el) }) ?? {};
+  record.api = app.mount($(".window-body", el), { openApp, openArticle, navigateSection, player, windowId, closeWindow: () => closeWindow(record), actions: $(".window-actions", el) }) ?? {};
   record.api.show?.(lastArticleView.post, lastArticleView.slug);
   record.api.select?.(lastArticleView.post?.slug);
   el.addEventListener("pointerdown", () => focusWindow(record));
@@ -593,7 +593,7 @@ function restorePosition(snapshot) {
   space.view.move(snapshot.horizontalScroll);
 }
 
-function displayRoute(route, { snapshot, revealArticle = false, keyboard = false } = {}) {
+function displayRoute(route, { snapshot, fragment = "", revealArticle = false, keyboard = false, animateSection = false } = {}) {
   const space = spaces.find(({ id }) => id === route.workspace);
   switchWorkspace(space.index);
   if (snapshot) restoreLayout(snapshot);
@@ -617,9 +617,19 @@ function displayRoute(route, { snapshot, revealArticle = false, keyboard = false
   }
   document.title = pageTitle(route, post);
   if (snapshot) restorePosition(snapshot);
+  if (fragment && post && route.slug) {
+    let id;
+    try { id = decodeURIComponent(fragment.slice(1)); } catch { return; }
+    requestAnimationFrame(() => space.windows.get("reader").api.jumpTo(id, { animate: animateSection, focus: animateSection }));
+  }
 }
 
 const navigate = connectNavigation({ base: siteBase, capture: captureView, display: displayRoute });
+function navigateSection(id) {
+  const slug = lastArticleView.post?.slug;
+  if (!slug) return;
+  navigate({ workspace: "articles", slug }, { fragment: id, revealArticle: true, animateSection: true });
+}
 function goToWorkspace(index) {
   const space = spaces[index];
   if (!space) return;
@@ -629,7 +639,7 @@ function goToWorkspace(index) {
   }
   navigate({ workspace: space.id, slug: space.id === "articles" ? lastArticleView.slug : undefined });
 }
-displayRoute(initialRoute, { revealArticle: Boolean(initialRoute.slug) });
+displayRoute(initialRoute, { revealArticle: Boolean(initialRoute.slug), fragment: location.hash });
 // Commit the initial position before enabling transitions for later navigation.
 track.getBoundingClientRect();
 wallpaper.getBoundingClientRect();
@@ -647,7 +657,7 @@ document.addEventListener("click", (event) => {
   const route = readRoute(url.pathname, siteBase.pathname);
   if (!route) return;
   event.preventDefault();
-  navigate(route, { origin: link, revealArticle: Boolean(route.slug), keyboard: event.detail === 0 });
+  navigate(route, { origin: link, revealArticle: Boolean(route.slug), keyboard: event.detail === 0, fragment: url.hash });
 });
 
 $("#launcher").innerHTML = apps.map((app) => `<button class="launch-app" data-open="${app.id}" style="--app-color:${app.color}">

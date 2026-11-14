@@ -18,9 +18,12 @@ export function postMeta(post) {
 
 export function articleMarkup(post, windowId, siteRoot = "./") {
   const content = post.html.replaceAll("__POST_SITE_ROOT__", escapeHtml(siteRoot));
-  const html = windowId
-    ? content.replace(/(id="|href="#)(post-[a-z0-9-]+)"/g, `$1${windowId}-$2"`)
-    : content;
+  let html = content;
+  if (windowId) {
+    for (const { id } of post.headings) {
+      html = html.replace(`id="${escapeHtml(id)}"`, `id="${escapeHtml(`${windowId}-${id}`)}"`);
+    }
+  }
   return `<article class="post">
     <header class="post-header">
       <div class="post-meta">${postMeta(post)}</div>
