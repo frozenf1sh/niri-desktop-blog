@@ -52,6 +52,7 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   let selected = 0;
   let composing = false;
   let passwordFor = null;
+  let passwordInput = null;
 
   function promptText() {
     const cwd = terminal.cwd;
@@ -110,10 +111,19 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
       const result = await terminal.execute(line);
       if (result.passwordFor) {
         passwordFor = result.passwordFor;
-        input.type = "password";
-        input.autocomplete = "current-password";
-        input.setAttribute("aria-label", "密码");
-        form.classList.add("is-password");
+        passwordInput = document.createElement("input");
+        passwordInput.type = "password";
+        passwordInput.className = "terminal-input terminal-password";
+        passwordInput.setAttribute("aria-label", "密码");
+        passwordInput.autocomplete = "off";
+        passwordInput.spellcheck = false;
+        // Keep password entry outside the command form's submission and history.
+        passwordInput.setAttribute("form", "");
+        input.hidden = true;
+        ink.hidden = true;
+        input.parentElement.append(passwordInput);
+        passwordInput.addEventListener("keydown", handlePasswordKey);
+        passwordInput.focus({ preventScroll: true });
       }
       if (result.closeWindow) { closeWindow(); return; }
       if (result.clear) history.replaceChildren();
@@ -130,13 +140,33 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   });
   function endPassword() {
     passwordFor = null;
-    input.value = "";
-    input.type = "text";
-    input.autocomplete = "off";
-    input.setAttribute("aria-label", "命令");
-    form.classList.remove("is-password");
+    if (passwordInput) {
+      passwordInput.value = "";
+      passwordInput.remove();
+      passwordInput = null;
+    }
+    input.hidden = false;
+    ink.hidden = false;
     formPrompt.textContent = promptText();
     paintInput();
+    input.focus({ preventScroll: true });
+  }
+  function handlePasswordKey(event) {
+    if (event.isComposing) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      endPassword();
+      print("已取消。");
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (!passwordInput.value) return;
+      const username = passwordFor;
+      endPassword();
+      session.login(username);
+      print(`已切换到 ${username}。`);
+      revealPrompt();
+    }
   }
 
   const art = document.createElement("pre");
@@ -213,15 +243,7 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (composing) return;
-    if (passwordFor) {
-      if (!input.value) return;
-      const username = passwordFor;
-      endPassword();
-      session.login(username);
-      print(`已切换到 ${username}。`);
-      revealPrompt();
-      return;
-    }
+    if (passwordFor) return;
     const value = input.value.trim();
     input.value = "";
     hideSuggestions();
@@ -234,10 +256,6 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   });
 
   input.addEventListener("keydown", (event) => {
-    if (passwordFor) {
-      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); endPassword(); print("已取消。"); }
-      return;
-    }
     if (event.key === "Tab") {
       event.preventDefault();
       if (composing || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -282,14 +300,15 @@ export function mountTerminal(root, { directories, baseUrl, posts, postHref, ope
   input.addEventListener("compositionend", () => {
     composing = false;
     form.classList.remove("is-composing");
-    paintInput();
+    if (!passwordFor) paintInput();
   });
   input.addEventListener("scroll", syncInkScroll);
   input.addEventListener("blur", hideSuggestions);
   input.addEventListener("focus", revealPrompt);
   shell.addEventListener("click", (event) => {
     if (event.target.closest("a, button, input") || !getSelection()?.isCollapsed) return;
-    input.focus({ preventScroll: true });
+    (passwordInput ?? input).focus({ preventScroll: true });
     revealPrompt();
   });
+  return { close() { if (passwordInput) endPassword(); } };
 }

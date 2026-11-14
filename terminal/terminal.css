@@ -122,6 +122,5 @@
   .terminal-input-ink { visibility: hidden; }
 }
 
-.terminal-form.is-password .terminal-input { color: inherit; }
-.terminal-form.is-password .terminal-input-ink { visibility: hidden; }
-.terminal-form.is-password .terminal-input::selection { color: inherit; }
+.terminal-password { color: inherit; }
+.terminal-password::selection { color: inherit; }

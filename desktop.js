@@ -472,7 +472,7 @@ function mountWindow(app, space, open) {
   el.tabIndex = -1;
   el.setAttribute("aria-labelledby", `${windowId}-title`);
   el.innerHTML = `<header class="window-bar">
-    <div class="window-title">${icon(app.icon)}<h2 id="${windowId}-title">${app.title}</h2></div>
+    <div class="window-title">${icon(app.icon)}<h2 id="${windowId}-title">${app.title}</h2>${app.id === "terminal" ? '<span class="window-shortcut" aria-label="快捷键 Command K">⌘ K</span>' : ""}</div>
     <div class="window-actions">
       <button class="icon-button" data-max aria-label="最大化" title="最大化">${icon("maximize")}</button>
       <button class="icon-button window-close" aria-label="关闭" title="关闭">${icon("close")}</button>
@@ -671,7 +671,10 @@ function focusColumn(direction) {
 
 document.addEventListener("keydown", (event) => {
   if (event.defaultPrevented || event.isComposing || $("#auth-dialog").open) return;
-  if (event.key === "Escape") {
+  if (event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyK") {
+    event.preventDefault();
+    openApp("terminal");
+  } else if (event.key === "Escape") {
     if (openPanel) setPanel(null, true);
     else if (spaces[workspaceIndex].maximized) toggleMaximize(spaces[workspaceIndex].maximized);
     else return;
